@@ -80,7 +80,7 @@ z.object({
   mode: z.enum(["agent", "plan", "ask"]).optional().default("agent"),
   workspace: z.string().optional(),      // must pass path allowlist
   worktree: z.string().optional(),       // must pass path allowlist
-  sandbox: z.boolean().optional().default(false),
+  sandbox: z.boolean().optional(),  // omitted = no `--sandbox` flag; true/false → enabled/disabled
   output_format: z.enum(["text", "json", "stream-json"]).optional().default("text"),
   approve_mcps: z.boolean().optional().default(false),
   max_turns: z.number().int().min(1).max(100).optional(),

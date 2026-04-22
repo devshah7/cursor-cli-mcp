@@ -3,6 +3,9 @@ import {
   buildAgentStatusArgs,
   buildListModelsArgs,
   buildRunAgentArgs,
+  buildSessionCreateArgs,
+  buildSessionListArgs,
+  buildSessionResumeArgs,
 } from '../../../src/adapters/agentCli/argBuilder.js';
 
 describe('argBuilder', () => {
@@ -30,6 +33,7 @@ describe('argBuilder', () => {
         '--worktree',
         '/t',
         '--sandbox',
+        'enabled',
         '--output-format',
         'json',
         '--approve-mcps',
@@ -39,11 +43,45 @@ describe('argBuilder', () => {
     );
   });
 
+  it('buildRunAgentArgs pushes --sandbox disabled when sandbox is false', () => {
+    const args = buildRunAgentArgs({
+      prompt: 'x',
+      sandbox: false,
+    });
+    expect(args).toEqual(
+      expect.arrayContaining(['--sandbox', 'disabled', '--output-format', 'text']),
+    );
+  });
+
+  it('buildRunAgentArgs omits sandbox flag when sandbox is undefined', () => {
+    const args = buildRunAgentArgs({ prompt: 'x' });
+    expect(args.filter((a) => a === '--sandbox')).toHaveLength(0);
+  });
+
   it('buildListModelsArgs uses models subcommand', () => {
     expect(buildListModelsArgs()).toEqual(['models']);
   });
 
   it('buildAgentStatusArgs uses status subcommand', () => {
     expect(buildAgentStatusArgs()).toEqual(['status']);
+  });
+
+  it('buildSessionListArgs uses ls subcommand', () => {
+    expect(buildSessionListArgs()).toEqual(['ls']);
+  });
+
+  it('buildSessionCreateArgs uses create-chat subcommand', () => {
+    expect(buildSessionCreateArgs()).toEqual(['create-chat']);
+  });
+
+  it('buildSessionResumeArgs maps prompt, resume id, model, output_format', () => {
+    expect(
+      buildSessionResumeArgs({
+        prompt: 'continue',
+        sessionId: 'abc-123',
+        model: 'm',
+        output_format: 'json',
+      }),
+    ).toEqual(['-p', 'continue', '--resume', 'abc-123', '--model', 'm', '--output-format', 'json']);
   });
 });

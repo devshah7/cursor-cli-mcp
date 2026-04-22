@@ -210,22 +210,22 @@
 
 **Gate status:** SESSION_GATE: FAIL for original `agent session` subcommand design. Gate is satisfied for the redesigned implementation — real session commands confirmed from live binary output (2026-04-22). Use the commands below; do NOT attempt `agent session list/create/resume`.
 
-- **T2.7** — Fix `--sandbox` bug in `src/adapters/agentCli/argBuilder.ts`:
+- [x] **T2.7** — Fix `--sandbox` bug in `src/adapters/agentCli/argBuilder.ts`:
   - Current (wrong): `args.push('--sandbox')` when `sandbox: true`
   - Required: `args.push('--sandbox', 'enabled')` when `sandbox: true`; `args.push('--sandbox', 'disabled')` when `sandbox: false`; omit flag when `sandbox` is `undefined`
   - Update unit tests in `tests/unit/adapters/` to assert `'--sandbox', 'enabled'` appears in args
-  - Acceptance: `buildRunAgentArgs({ prompt: 'x', sandbox: true })` contains `['--sandbox', 'enabled']`; all tests pass
-- **T2.8** — Implement `src/tools/sessionList.ts`: calls `agent ls` via executor; parses stdout for session list; wire into `src/registry/tools.ts`
+  - Acceptance: `buildRunAgentArgs({ prompt: 'x', sandbox: true })` contains `['--sandbox', 'enabled']`; all tests pass _(2026-04-22)_
+- [x] **T2.8** — Implement `src/tools/sessionList.ts`: calls `agent ls` via executor; parses stdout for session list; wire into `src/registry/tools.ts`
   - argBuilder: add `buildSessionListArgs()` → `['ls']`
-  - Acceptance: 4 unit tests pass; tool callable from MCP host
-- **T2.9** — Implement `src/tools/sessionCreate.ts`: calls `agent create-chat` via executor; parses stdout for chat ID; returns `{ sessionId: string }`; wire into registry
+  - Acceptance: 4 unit tests pass; tool callable from MCP host _(2026-04-22)_
+- [x] **T2.9** — Implement `src/tools/sessionCreate.ts`: calls `agent create-chat` via executor; parses stdout for chat ID; returns `{ sessionId: string }`; wire into registry
   - argBuilder: add `buildSessionCreateArgs()` → `['create-chat']`
-  - Acceptance: 4 unit tests pass; returned sessionId is a non-empty string
-- **T2.10** — Implement `src/tools/sessionResume.ts`: calls `agent -p <prompt> --resume <chatId>` via executor; wire into registry
+  - Acceptance: 4 unit tests pass; returned sessionId is a non-empty string _(2026-04-22)_
+- [x] **T2.10** — Implement `src/tools/sessionResume.ts`: calls `agent -p <prompt> --resume <chatId>` via executor; wire into registry
   - argBuilder: add `buildSessionResumeArgs({ sessionId, prompt })` → `['-p', prompt, '--resume', sessionId]`
-  - Acceptance: 4 unit tests pass; tool callable from MCP host
-- **T2.11** — Write unit tests for all three session tools (12 tests total) alongside implementation
-  - Acceptance: 12 session tool tests pass; sandbox argBuilder fix verified by test
+  - Acceptance: 4 unit tests pass; tool callable from MCP host _(2026-04-22)_
+- [x] **T2.11** — Write unit tests for all three session tools (12 tests total) alongside implementation
+  - Acceptance: 12 session tool tests pass; sandbox argBuilder fix verified by test _(2026-04-22; unit suite 88 tests)_
 
 **Phase 2 Gate (all parallel branches merged + sessions if gated):**
 

@@ -31,7 +31,9 @@ export function buildRunAgentArgs(input: RunAgentInput): string[] {
     args.push('--worktree', input.worktree);
   }
   if (input.sandbox === true) {
-    args.push('--sandbox');
+    args.push('--sandbox', 'enabled');
+  } else if (input.sandbox === false) {
+    args.push('--sandbox', 'disabled');
   }
   const fmt = input.output_format ?? 'text';
   args.push('--output-format', fmt);
@@ -50,4 +52,29 @@ export function buildListModelsArgs(): string[] {
 
 export function buildAgentStatusArgs(): string[] {
   return ['status'];
+}
+
+export function buildSessionListArgs(): string[] {
+  return ['ls'];
+}
+
+export function buildSessionCreateArgs(): string[] {
+  return ['create-chat'];
+}
+
+export interface SessionResumeCliInput {
+  prompt: string;
+  sessionId: string;
+  model?: string;
+  output_format?: 'text' | 'json';
+}
+
+export function buildSessionResumeArgs(input: SessionResumeCliInput): string[] {
+  const args: string[] = ['-p', input.prompt, '--resume', input.sessionId];
+  if (input.model !== undefined) {
+    args.push('--model', input.model);
+  }
+  const fmt = input.output_format ?? 'text';
+  args.push('--output-format', fmt);
+  return args;
 }

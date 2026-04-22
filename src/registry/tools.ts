@@ -5,6 +5,9 @@ import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import { createAgentStatusDescriptor } from '../tools/agentStatus.js';
 import { createListModelsDescriptor } from '../tools/listModels.js';
 import { createRunAgentDescriptor } from '../tools/runAgent.js';
+import { createSessionCreateDescriptor } from '../tools/sessionCreate.js';
+import { createSessionListDescriptor } from '../tools/sessionList.js';
+import { createSessionResumeDescriptor } from '../tools/sessionResume.js';
 
 export interface ToolDescriptor<T = unknown> {
   name: string;
@@ -29,6 +32,9 @@ export function buildToolDescriptors(config: Config): Array<ToolDescriptor<unkno
   return [
     createRunAgentDescriptor(ctx) as ToolDescriptor<unknown>,
     createListModelsDescriptor(ctx) as ToolDescriptor<unknown>,
+    createSessionListDescriptor(ctx) as ToolDescriptor<unknown>,
+    createSessionCreateDescriptor(ctx) as ToolDescriptor<unknown>,
+    createSessionResumeDescriptor(ctx) as ToolDescriptor<unknown>,
     createAgentStatusDescriptor(ctx) as ToolDescriptor<unknown>,
   ];
 }
