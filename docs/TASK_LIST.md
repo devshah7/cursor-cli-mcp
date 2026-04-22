@@ -233,10 +233,10 @@
 
 ### `feat/phase-3-resources` — PARALLEL
 
-- **T3.1** — Implement `src/resources/cliPermissions.ts`: static markdown content for FR-R1; register with MCP server at URI `cursor-cli-mcp://resources/cli-permissions`
-  - Acceptance: resource readable from MCP host; content is > 200 chars of valid markdown
-- **T3.2** — Implement `src/resources/rulesDiscovery.ts`: static markdown content for FR-R2; register with MCP server
-  - Acceptance: resource readable from MCP host; content mentions `.cursor/rules`, `AGENTS.md`, `CLAUDE.md`
+- [x] **T3.1** — Implement `src/resources/cliPermissions.ts`: static markdown content for FR-R1; register with MCP server at URI `cursor-cli-mcp://resources/cli-permissions`
+  - Acceptance: resource readable from MCP host; content is > 200 chars of valid markdown _(2026-04-22 — merged via feat/phase-3-resources)_
+- [x] **T3.2** — Implement `src/resources/rulesDiscovery.ts`: static markdown content for FR-R2; register with MCP server
+  - Acceptance: resource readable from MCP host; content mentions `.cursor/rules`, `AGENTS.md`, `CLAUDE.md` _(2026-04-22 — merged via feat/phase-3-resources)_
 
 ### `feat/phase-3-prompts` — PARALLEL
 
