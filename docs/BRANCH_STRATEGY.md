@@ -57,6 +57,7 @@ main
 ### Phase 0
 
 #### `feat/phase-0-scaffold`
+
 - **Depends on:** nothing (branch from `main`)
 - **Parallel with:** nothing
 - **Concerns:** TypeScript project setup, CI pipeline, toolchain config
@@ -69,6 +70,7 @@ main
 ### Phase 1
 
 #### `feat/phase-1-mcp-server`
+
 - **Depends on:** `feat/phase-0-scaffold` merged to `main`
 - **Parallel with:** `feat/phase-1-agent-executor`
 - **Concerns:** MCP Server instantiation, tool/resource/prompt registration stubs, stdio transport wiring
@@ -78,6 +80,7 @@ main
 - **PR title format:** `feat(phase-1): MCP server scaffolding and stdio transport`
 
 #### `feat/phase-1-agent-executor`
+
 - **Depends on:** `feat/phase-0-scaffold` merged to `main`
 - **Parallel with:** `feat/phase-1-mcp-server`
 - **Concerns:** `AgentExecutor` class, `RingBuffer`, `ExecutorOptions`/`ExecutorResult` types, subprocess management, timeout logic
@@ -91,7 +94,8 @@ main
 ### Phase 2
 
 #### `feat/phase-2-tool-run-agent`
-- **Depends on:** both `feat/phase-1-*` branches merged to `main`
+
+- **Depends on:** both `feat/phase-1-`* branches merged to `main`
 - **Parallel with:** `feat/phase-2-tool-models`, `feat/phase-2-tool-health`, `feat/phase-2-cli-validation`
 - **Concerns:** `run_agent` tool — Zod schema, handler, CLI arg builder, wired into server
 - **Files touched:** `src/tools/runAgent.ts`, `tests/unit/tools/runAgent.test.ts`, update `src/server.ts` to register tool
@@ -99,7 +103,8 @@ main
 - **PR title format:** `feat(phase-2): run_agent tool implementation`
 
 #### `feat/phase-2-tool-models`
-- **Depends on:** both `feat/phase-1-*` branches merged to `main`
+
+- **Depends on:** both `feat/phase-1-`* branches merged to `main`
 - **Parallel with:** `feat/phase-2-tool-run-agent`, `feat/phase-2-tool-health`, `feat/phase-2-cli-validation`
 - **Concerns:** `list_models` tool
 - **Files touched:** `src/tools/listModels.ts`, `tests/unit/tools/listModels.test.ts`, update `src/server.ts`
@@ -107,7 +112,8 @@ main
 - **PR title format:** `feat(phase-2): list_models tool implementation`
 
 #### `feat/phase-2-tool-health`
-- **Depends on:** both `feat/phase-1-*` branches merged to `main`
+
+- **Depends on:** both `feat/phase-1-`* branches merged to `main`
 - **Parallel with:** `feat/phase-2-tool-run-agent`, `feat/phase-2-tool-models`, `feat/phase-2-cli-validation`
 - **Concerns:** `agent_status` tool
 - **Files touched:** `src/tools/agentStatus.ts`, `tests/unit/tools/agentStatus.test.ts`, update `src/server.ts`
@@ -115,8 +121,9 @@ main
 - **PR title format:** `feat(phase-2): agent_status tool implementation`
 
 #### `feat/phase-2-cli-validation`
+
 - **Branch type:** RESEARCH (not a feature branch — produces no compiled code)
-- **Depends on:** both `feat/phase-1-*` branches merged to `main`
+- **Depends on:** both `feat/phase-1-`* branches merged to `main`
 - **Parallel with:** `feat/phase-2-tool-run-agent`, `feat/phase-2-tool-models`, `feat/phase-2-tool-health`
 - **Concerns:** Run `agent session --help`, evaluate against PASS criteria in TASK_LIST.md T2.5, update TASK_LIST.md with gate result and raw command output
 - **Files touched:** `docs/TASK_LIST.md` only (gate result + raw output). Do NOT touch `src/` or `tests/`.
@@ -125,6 +132,7 @@ main
 - **PR title format:** `research(phase-2): CLI session command validation`
 
 #### `feat/phase-2-tool-sessions` — GATED
+
 - **Depends on:** `feat/phase-2-cli-validation` merged AND `SESSION_GATE: PASS`
 - **Parallel with:** nothing (serial)
 - **Concerns:** `session_list`, `session_create`, `session_resume` tools
@@ -138,7 +146,8 @@ main
 ### Phase 3
 
 #### `feat/phase-3-resources`
-- **Depends on:** all `feat/phase-2-*` branches merged to `main`
+
+- **Depends on:** all `feat/phase-2-`* branches merged to `main`
 - **Parallel with:** `feat/phase-3-prompts`
 - **Concerns:** `cli-permissions-reference` and `rules-discovery` MCP resources
 - **Files touched:** `src/resources/cliPermissions.ts`, `src/resources/rulesDiscovery.ts`, update `src/server.ts`
@@ -146,7 +155,8 @@ main
 - **PR title format:** `feat(phase-3): CLI permissions and rules discovery resources`
 
 #### `feat/phase-3-prompts`
-- **Depends on:** all `feat/phase-2-*` branches merged to `main`
+
+- **Depends on:** all `feat/phase-2-`* branches merged to `main`
 - **Parallel with:** `feat/phase-3-resources`
 - **Concerns:** `plan-only`, `ask-only`, `worktree-isolation` prompt templates
 - **Files touched:** `src/prompts/planOnly.ts`, `src/prompts/askOnly.ts`, `src/prompts/worktreeIsolation.ts`, update `src/server.ts`
@@ -158,7 +168,8 @@ main
 ### Phase 4
 
 #### `feat/phase-4-security`
-- **Depends on:** all `feat/phase-3-*` branches merged to `main`
+
+- **Depends on:** all `feat/phase-3-`* branches merged to `main`
 - **Parallel with:** `feat/phase-4-streaming`
 - **Concerns:** Security regression test suite, path traversal hardening, prompt logging audit
 - **Files touched:** `tests/unit/security.test.ts` (expanded), `src/security.ts` (if gaps found), docs
@@ -166,7 +177,8 @@ main
 - **PR title format:** `feat(phase-4): security regression suite and hardening`
 
 #### `feat/phase-4-streaming`
-- **Depends on:** all `feat/phase-3-*` branches merged to `main`
+
+- **Depends on:** all `feat/phase-3-`* branches merged to `main`
 - **Parallel with:** `feat/phase-4-security`
 - **Concerns:** Streaming output via MCP notifications for `run_agent`
 - **Files touched:** `src/tools/runAgent.ts` (streaming variant), `src/executor/index.ts` (streaming support), new streaming tests
@@ -226,3 +238,4 @@ Phase 4:  phase-4-security    (either order)
 3. Run full gate checklist after resolving.
 4. Never force-push to `main`. Only force-push to your own feature branch if rebasing.
 5. If the conflict is in `src/server.ts` (tool registration): keep all registrations, yours and the incoming branch's.
+
