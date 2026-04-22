@@ -75,27 +75,27 @@
 
 #### Tasks
 
-- **T1A.1** — Implement `src/logger.ts`: structured JSON logger writing to `process.stderr` only; levels: `debug`, `info`, `warn`, `error`; respects `LOG_LEVEL` env var; `LOG_PROMPTS` gate
-  - Acceptance: unit test confirms no output to stdout; `console.log` in logger file causes lint failure
-- **T1A.2** — Implement `src/errors.ts`: `ErrorClass` enum, `StructuredError` interface, `buildError()` factory function per API_SPEC.md section 2.1 and error classification table in ARCHITECTURE.md section 5.2
-  - Acceptance: TypeScript compiles; all error classes in API_SPEC.md are represented
-- **T1A.3** — Implement `src/ports/agentExecutor.ts`: `IAgentExecutor` interface with single method `run(options: ExecutorOptions): Promise<ExecutorResult>`; import `ExecutorOptions` and `ExecutorResult` types from `src/adapters/agentCli/types.ts` (types file created in T1B.1 — coordinate or stub the import)
-  - Acceptance: TypeScript compiles; interface has exactly one method; zero imports from application or transport layers
-- **T1A.4** — Implement `src/pipeline/toolPipeline.ts`: `wrapTool(descriptor: ToolDescriptor, executor: IAgentExecutor): McpToolHandler` function that executes the fixed 5-step pipeline (validate → security.validatePaths → handler → mapResult → mapError); error classification logic lives here, not in tool handlers
-  - Acceptance: unit test with mock tool descriptor and mock executor covers: happy path, Zod failure → VALIDATION, security failure → SECURITY, executor non-zero exit → AGENT_ERROR, timedOut → TIMEOUT, ENOENT → BINARY_NOT_FOUND
-- **T1A.5** — Implement `src/registry/tools.ts` (empty `ALL_TOOLS: ToolDescriptor[] = []`), `src/registry/resources.ts` (empty), `src/registry/prompts.ts` (empty). Define `ToolDescriptor`, `ResourceDescriptor`, `PromptDescriptor` interfaces in each file.
-  - Acceptance: TypeScript compiles; imports from registry files succeed
-- **T1A.6** — Implement `src/server.ts`: reads `ALL_TOOLS`, `ALL_RESOURCES`, `ALL_PROMPTS` from registries; for each tool calls `pipeline.wrapTool(descriptor, executor)`; registers result with MCP SDK; exports `startServer(executor: IAgentExecutor): void`
-  - Acceptance: `startServer()` with empty registries starts without throwing; server name/version matches API_SPEC.md section 7
-- **T1A.7** — Implement `src/index.ts`: composition root — loads `Config`, instantiates `AgentCliExecutor` (injecting Config), calls `startServer(executor)`; handles SIGTERM/SIGINT per ARCHITECTURE.md section 4.8 shutdown contract
-  - Acceptance: `echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.0.1"}}}' | node dist/index.js` returns valid JSON-RPC response
+- [x] **T1A.1** — Implement `src/logger.ts`: structured JSON logger writing to `process.stderr` only; levels: `debug`, `info`, `warn`, `error`; respects `LOG_LEVEL` env var; `LOG_PROMPTS` gate
+  - Acceptance: unit test confirms no output to stdout; `console.log` in logger file causes lint failure _(2026-04-22 — `tests/unit/logger.test.ts`)_
+- [x] **T1A.2** — Implement `src/errors.ts`: `ErrorClass` enum, `StructuredError` interface, `buildError()` factory function per API_SPEC.md section 2.1 and error classification table in ARCHITECTURE.md section 5.2
+  - Acceptance: TypeScript compiles; all error classes in API_SPEC.md are represented _(2026-04-22)_
+- [x] **T1A.3** — Implement `src/ports/agentExecutor.ts`: `IAgentExecutor` interface with single method `run(options: ExecutorOptions): Promise<ExecutorResult>`; import `ExecutorOptions` and `ExecutorResult` types from `src/adapters/agentCli/types.ts` (types file created in T1B.1 — coordinate or stub the import)
+  - Acceptance: TypeScript compiles; interface has exactly one method; zero imports from application or transport layers _(2026-04-22 — types live in `src/ports/executorTypes.ts`; `adapters/agentCli/types.ts` re-exports)_
+- [x] **T1A.4** — Implement `src/pipeline/toolPipeline.ts`: `wrapTool(descriptor: ToolDescriptor, executor: IAgentExecutor): McpToolHandler` function that executes the fixed 5-step pipeline (validate → security.validatePaths → handler → mapResult → mapError); error classification logic lives here, not in tool handlers
+  - Acceptance: unit test with mock tool descriptor and mock executor covers: happy path, Zod failure → VALIDATION, security failure → SECURITY, executor non-zero exit → AGENT_ERROR, timedOut → TIMEOUT, ENOENT → BINARY_NOT_FOUND _(2026-04-22 — `wrapTool(descriptor, executor, ctx)` adds allowlist context)_
+- [x] **T1A.5** — Implement `src/registry/tools.ts` (empty `ALL_TOOLS: ToolDescriptor[] = []`), `src/registry/resources.ts` (empty), `src/registry/prompts.ts` (empty). Define `ToolDescriptor`, `ResourceDescriptor`, `PromptDescriptor` interfaces in each file.
+  - Acceptance: TypeScript compiles; imports from registry files succeed _(2026-04-22)_
+- [x] **T1A.6** — Implement `src/server.ts`: reads `ALL_TOOLS`, `ALL_RESOURCES`, `ALL_PROMPTS` from registries; for each tool calls `pipeline.wrapTool(descriptor, executor)`; registers result with MCP SDK; exports `startServer(executor: IAgentExecutor): void`
+  - Acceptance: `startServer()` with empty registries starts without throwing; server name/version matches API_SPEC.md section 7 _(2026-04-22 — `startServer(executor, config)` passes allowlist into pipeline; identity matches API_SPEC §7)_
+- [x] **T1A.7** — Implement `src/index.ts`: composition root — loads `Config`, instantiates `AgentCliExecutor` (injecting Config), calls `startServer(executor)`; handles SIGTERM/SIGINT per ARCHITECTURE.md section 4.8 shutdown contract
+  - Acceptance: `echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.0.1"}}}' | node dist/index.js` returns valid JSON-RPC response _(2026-04-22)_
 
 **Phase 1A Gate:**
 
-- MCP initialize response received (manual smoke test T1A.7 passes)
-- Response received in < 500ms (`time` command)
-- `npm run lint && npm run typecheck && npm run test:unit` all exit 0
-- `pipeline/toolPipeline.test.ts` — 6 passing tests
+- [x] MCP initialize response received (manual smoke test T1A.7 passes) _(2026-04-22)_
+- [x] Response received in < 500ms (`time` command) _(2026-04-22 — ~70ms real on dev machine)_
+- [x] `npm run lint && npm run typecheck && npm run test:unit` all exit 0 _(2026-04-22)_
+- [x] `pipeline/toolPipeline.test.ts` — 6 passing tests _(2026-04-22)_
 
 ---
 
@@ -107,35 +107,35 @@
 
 #### Tasks
 
-- **T1B.1** — Implement `src/adapters/agentCli/types.ts`: `ExecutorOptions` and `ExecutorResult` interfaces per ARCHITECTURE.md section 4.7; these types are also imported by `src/ports/agentExecutor.ts`
-  - Acceptance: TypeScript compiles; types match ARCHITECTURE.md exactly; no imports from application or transport layers
-- **T1B.2** — Implement `src/adapters/agentCli/ringBuffer.ts`: `RingBuffer` class per ARCHITECTURE.md section 4.7 (append, toString, truncated); UTF-8 boundary contract implemented exactly as specified
-  - Acceptance: all 8 ringBuffer unit tests pass (see TESTING_STRATEGY.md section 2.3 — includes UTF-8 and isolation tests)
-- **T1B.3** — Implement `src/config.ts`: load all env vars from ARCHITECTURE.md section 4.8; expose typed `Config` object; validation rules exactly as specified (AGENT_TIMEOUT_MS and MAX_OUTPUT_BYTES throw ConfigError; AGENT_BINARY_PATH warns only)
-  - Acceptance: all 5 config unit tests pass; invalid AGENT_TIMEOUT_MS causes process exit; missing binary causes warn, not exit
-- **T1B.4** — Implement `src/security.ts`: `validatePaths(paths: string[], allowlist: string[]): void` and `resolveAndCheck(raw: string, allowlist: string[]): string`; implement 7-rule path matching contract from ARCHITECTURE.md section 4.9 exactly
-  - Acceptance: all 8 security unit tests pass (TESTING_STRATEGY.md section 2.4)
-- **T1B.5** — Implement `src/adapters/agentCli/argBuilder.ts`: exported functions `buildRunAgentArgs(input)`, `buildListModelsArgs()`, `buildAgentStatusArgs()`. Each returns `string[]`. CLI flag names are canonical here — no other file may hardcode `--mode`, `--workspace`, etc.
-  - Acceptance: TypeScript compiles; each function returns a `string[]`; unit test verifies flag names match API_SPEC.md section 3 CLI mapping tables
-- **T1B.6** — Implement `src/adapters/agentCli/executor.ts`: `AgentCliExecutor implements IAgentExecutor`; uses `child_process.spawn` with `shell: false`; independent RingBuffers for stdout/stderr; SIGTERM → 5s grace → SIGKILL timeout; returns `ExecutorResult` on all paths, never throws
-  - Acceptance: all 8 executor unit tests pass; `shell: true` in any spawn call causes lint failure
-- **T1B.7** — Implement `tests/fixtures/mockExecutor.ts`: `MockExecutor implements IAgentExecutor` (proper class, no `as unknown as` cast); `createMockExecutor(overrides?)` factory function
-  - Acceptance: `mockExecutor.ts` passes TypeScript without casts; importable by Phase 2 tool tests
+- [x] **T1B.1** — Implement `src/adapters/agentCli/types.ts`: `ExecutorOptions` and `ExecutorResult` interfaces per ARCHITECTURE.md section 4.7; these types are also imported by `src/ports/agentExecutor.ts`
+  - Acceptance: TypeScript compiles; types match ARCHITECTURE.md exactly; no imports from application or transport layers _(2026-04-22 — canonical definitions in `src/ports/executorTypes.ts`; adapters file re-exports)_
+- [x] **T1B.2** — Implement `src/adapters/agentCli/ringBuffer.ts`: `RingBuffer` class per ARCHITECTURE.md section 4.7 (append, toString, truncated); UTF-8 boundary contract implemented exactly as specified
+  - Acceptance: all 8 ringBuffer unit tests pass (see TESTING_STRATEGY.md section 2.3 — includes UTF-8 and isolation tests) _(2026-04-22 — 8 ring tests + UTF-8 helper test in same file)_
+- [x] **T1B.3** — Implement `src/config.ts`: load all env vars from ARCHITECTURE.md section 4.8; expose typed `Config` object; validation rules exactly as specified (AGENT_TIMEOUT_MS and MAX_OUTPUT_BYTES throw ConfigError; AGENT_BINARY_PATH warns only)
+  - Acceptance: all 5 config unit tests pass; invalid AGENT_TIMEOUT_MS causes process exit; missing binary causes warn, not exit _(2026-04-22 — invalid timeout throws `ConfigError` on `loadConfig()`; entrypoint exits 1 on `ConfigError`)_
+- [x] **T1B.4** — Implement `src/security.ts`: `validatePaths(paths: string[], allowlist: string[]): void` and `resolveAndCheck(raw: string, allowlist: string[]): string`; implement 7-rule path matching contract from ARCHITECTURE.md section 4.9 exactly
+  - Acceptance: all 8 security unit tests pass (TESTING_STRATEGY.md section 2.4) _(2026-04-22)_
+- [x] **T1B.5** — Implement `src/adapters/agentCli/argBuilder.ts`: exported functions `buildRunAgentArgs(input)`, `buildListModelsArgs()`, `buildAgentStatusArgs()`. Each returns `string[]`. CLI flag names are canonical here — no other file may hardcode `--mode`, `--workspace`, etc.
+  - Acceptance: TypeScript compiles; each function returns a `string[]`; unit test verifies flag names match API_SPEC.md section 3 CLI mapping tables _(2026-04-22 — `tests/unit/adapters/argBuilder.test.ts`)_
+- [x] **T1B.6** — Implement `src/adapters/agentCli/executor.ts`: `AgentCliExecutor implements IAgentExecutor`; uses `child_process.spawn` with `shell: false`; independent RingBuffers for stdout/stderr; SIGTERM → 5s grace → SIGKILL timeout; returns `ExecutorResult` on all paths, never throws
+  - Acceptance: all 8 executor unit tests pass; `shell: true` in any spawn call causes lint failure _(2026-04-22)_
+- [x] **T1B.7** — Implement `tests/fixtures/mockExecutor.ts`: `MockExecutor implements IAgentExecutor` (proper class, no `as unknown as` cast); `createMockExecutor(overrides?)` factory function
+  - Acceptance: `mockExecutor.ts` passes TypeScript without casts; importable by Phase 2 tool tests _(2026-04-22)_
 
 **Phase 1B Gate:**
 
-- `tests/unit/adapters/executor.test.ts` — 8 passing
-- `tests/unit/adapters/ringBuffer.test.ts` — 8 passing (includes UTF-8 + isolation tests)
-- `tests/unit/security.test.ts` — 8 passing
-- `tests/unit/config.test.ts` — 5 passing
-- `npm run lint && npm run typecheck` exit 0
-- No import from `adapters/` in any `tools/` file (verified by typecheck + lint)
+- [x] `tests/unit/adapters/executor.test.ts` — 8 passing _(2026-04-22)_
+- [x] `tests/unit/adapters/ringBuffer.test.ts` — 8 passing (includes UTF-8 + isolation tests) _(2026-04-22)_
+- [x] `tests/unit/security.test.ts` — 8 passing _(2026-04-22)_
+- [x] `tests/unit/config.test.ts` — 5 passing _(2026-04-22)_
+- [x] `npm run lint && npm run typecheck` exit 0 _(2026-04-22)_
+- [x] No import from `adapters/` in any `tools/` file (verified by typecheck + lint) _(2026-04-22 — no `src/tools/*.ts` yet)_
 
 **Phase 1 Combined Gate (both branches merged):**
 
-- Full unit test suite passes
-- MCP initialize smoke test passes < 500ms
-- CI green
+- [x] Full unit test suite passes _(2026-04-22 — 40 tests)_
+- [x] MCP initialize smoke test passes < 500ms _(2026-04-22)_
+- [ ] CI green _(push to verify)_
 
 ---
 
