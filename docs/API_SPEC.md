@@ -97,7 +97,8 @@ z.object({
 | `mode=ask` | `--mode=ask` |
 | `workspace` | `--workspace <path>` |
 | `worktree` | `--worktree <path>` |
-| `sandbox=true` | `--sandbox` |
+| `sandbox=true` | `--sandbox enabled` |
+| `sandbox=false` | `--sandbox disabled` |
 | `output_format` | `--output-format <format>` |
 | `approve_mcps=true` | `--approve-mcps` |
 | `max_turns` | `--max-turns <n>` |
@@ -162,7 +163,7 @@ z.object({})  // no inputs
 
 Lists prior agent sessions/chats.
 
-**Gate condition:** Only registered with MCP server if CLI validation task (T2.6) confirms `agent session list` exists.
+**Gate condition:** SESSION_GATE: FAIL for original `agent session list` design. Redesigned around `agent ls` — confirmed available from live binary (2026-04-22). Implement using `agent ls`.
 
 **Input Schema:**
 
@@ -172,7 +173,9 @@ z.object({
 })
 ```
 
-**CLI invocation:** `agent session list` (exact flags TBD by T2.6).
+**CLI invocation:** `agent ls`
+- argBuilder: `buildSessionListArgs()` → `['ls']`
+- Parse stdout for session list; exact output format TBD from running `agent ls` with authenticated binary.
 
 **Success Response:**
 
@@ -183,7 +186,7 @@ z.object({
     text: JSON.stringify({
       sessions: Array<{
         id: string;
-        createdAt: string;  // ISO timestamp
+        createdAt: string;  // ISO timestamp if available
         title?: string;
       }>
     })
@@ -197,7 +200,7 @@ z.object({
 
 Creates a new empty session and returns its id.
 
-**Gate condition:** Same as FR-M3.
+**Gate condition:** Same redesign as FR-M3. Use `agent create-chat`.
 
 **Input Schema:**
 
@@ -207,7 +210,9 @@ z.object({
 })
 ```
 
-**CLI invocation:** `agent session create` (exact flags TBD by T2.6).
+**CLI invocation:** `agent create-chat`
+- argBuilder: `buildSessionCreateArgs()` → `['create-chat']`
+- Parse stdout for chat ID (expected: single line or JSON with the ID).
 
 **Success Response:**
 
@@ -216,8 +221,7 @@ z.object({
   content: [{
     type: "text",
     text: JSON.stringify({
-      sessionId: string;
-      createdAt: string;
+      sessionId: string;   // chat ID returned by create-chat
     })
   }]
 }
@@ -229,7 +233,7 @@ z.object({
 
 Resumes an existing session with an additional prompt.
 
-**Gate condition:** Same as FR-M3.
+**Gate condition:** Same redesign as FR-M3. Use `agent -p <prompt> --resume <chatId>`.
 
 **Input Schema:**
 
@@ -242,7 +246,8 @@ z.object({
 })
 ```
 
-**CLI invocation:** `agent -p "<prompt>" --session <id>` or equivalent (TBD by T2.6).
+**CLI invocation:** `agent -p "<prompt>" --resume <session_id>`
+- argBuilder: `buildSessionResumeArgs({ sessionId, prompt })` → `['-p', prompt, '--resume', sessionId]`
 
 **Success Response:** Same shape as `run_agent` (`AgentRunResult`).
 
