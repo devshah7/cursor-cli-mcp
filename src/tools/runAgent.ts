@@ -6,7 +6,11 @@ import type { ToolDescriptor } from '../registry/tools.js';
 
 export const runAgentSchema = z.object({
   prompt: z.string().min(1).max(32_000),
-  model: z.string().optional(),
+  model: z
+    .string()
+    .regex(/^[\w./:-]+$/)
+    .max(200)
+    .optional(),
   mode: z.enum(['agent', 'plan', 'ask']).default('agent'),
   workspace: z.string().optional(),
   worktree: z.string().optional(),
