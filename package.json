@@ -8,6 +8,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
+    "setup": "node scripts/setup.js",
     "lint": "eslint src/ tests/ --no-error-on-unmatched-pattern",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
