@@ -182,13 +182,18 @@ main
 - **Depends on:** all `feat/phase-3-`* branches merged to `main`
 - **Parallel with:** `feat/phase-4-security`
 - **Concerns:** Streaming output via MCP notifications for `run_agent`
-- **Files touched:** `src/tools/runAgent.ts` (streaming variant), `src/executor/index.ts` (streaming support), new streaming tests
+- **Files touched:** `src/tools/runAgent.ts` (streaming variant), `src/adapters/agentCli/executor.ts` (onStdoutChunk support), `src/ports/executorTypes.ts` (add `onStdoutChunk` to `ExecutorOptions`), `src/pipeline/toolPipeline.ts` (pass `sendNotification` through), `src/server.ts` (detect capability, inject `sendNotification` into `PipelineContext`), new streaming tests
+- **Approved design (issue #6):**
+  - `ExecutorOptions` gains `onStdoutChunk?: (chunk: string) => void` — executor calls it per chunk, ring buffers still collect in parallel
+  - `PipelineContext` gains `sendNotification?: (chunk: string) => void` — created and bound to MCP transport by `server.ts` (Layer 4); `undefined` = aggregated-only fallback. Tool handlers never import MCP transport directly.
+  - Capability detected once on MCP `initialize` in `server.ts`; stored as instance field; injected per-request into `PipelineContext`. No global/singleton state.
+  - Final aggregated `CallToolResult` always returned at completion regardless of streaming mode.
 - **Mandatory design review gate (before writing any code):**
-  1. Open a GitHub Issue titled `design: streaming output for run_agent` with the proposed design (how chunks flow from executor → tool handler → MCP notifications, how aggregated fallback works, how `isStreaming` capability is detected from the MCP client).
-  2. Tag the issue with `design-review`.
-  3. The Issue must receive a comment with explicit approval ("LGTM" or "approved") from the repo owner (@devshah) before any code in this branch is written.
+  1. ~~Open a GitHub Issue titled `design: streaming output for run_agent`~~ — **done: issue #6**
+  2. ~~Tag the issue with `design-review`~~ — **done**
+  3. The Issue must receive a comment with explicit approval ("LGTM" or "approved") from the repo owner (@devshah) before any code in this branch is written. — **pending**
   4. Link the approved Issue in the PR description under "Design review."
-- **Gate:** Design review approved (Issue linked); first chunk delivered to MCP client < 2s for a typical prompt; all streaming tests pass
+- **Gate:** Design review approved (Issue #6 linked); first chunk delivered to MCP client < 2s for a typical prompt; all streaming tests pass
 - **PR title format:** `feat(phase-4): streaming output via MCP notifications`
 
 ---
