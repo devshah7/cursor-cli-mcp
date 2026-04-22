@@ -37,9 +37,16 @@ Do not write code until you have read all five documents.
 
 ## Project State
 
-- **Current phase:** Phase 4 — security hardening merged; `run_agent` stdout streaming via MCP logging + executor `onStdoutChunk` (merge streaming PR when CI green)
+- **Current version:** v1.0 — all phases (0–4) complete and merged to `main`
+- **Branch model:** `main` = production; `dev` = integration; all work branches off `dev` and PRs back to `dev`; release PRs promote `dev` → `main`
 - **Active branches:** See `docs/BRANCH_STRATEGY.md`
-- **Session tool gate:** **`SESSION_GATE: FAIL`** in `docs/TASK_LIST.md` — do **not** start `feat/phase-2-tool-sessions` until a developer re-runs CLI validation locally and records **`SESSION_GATE: PASS`**
+- **MCP tools live:** `run_agent`, `list_models`, `agent_status`, `session_create`, `session_resume` — all tested against real binary
+- **Known CLI behaviours (confirmed 2026-04-22):**
+  - `--trust` is always passed by the server (WORKSPACE_ALLOWLIST is the real security gate)
+  - `--max-turns` does not exist in this CLI version — removed from schema
+  - `agent ls` is a TUI only — `session_list` tool was removed; no headless session listing available
+  - `agent create-chat` may hang after printing ID — executor timeout is the safety net
+  - `--sandbox` takes a value: `enabled` or `disabled` (not a bare boolean flag)
 
 ---
 

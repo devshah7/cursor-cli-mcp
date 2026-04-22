@@ -83,7 +83,6 @@ z.object({
   sandbox: z.boolean().optional(),  // omitted = no `--sandbox` flag; true/false → enabled/disabled
   output_format: z.enum(["text", "json", "stream-json"]).optional().default("text"),
   approve_mcps: z.boolean().optional().default(false),
-  max_turns: z.number().int().min(1).max(100).optional(),
 })
 ```
 
@@ -91,7 +90,8 @@ z.object({
 
 | Input field | CLI flag |
 |-------------|----------|
-| `prompt` | `agent -p "<prompt>"` |
+| _(always)_ | `--trust` (workspace trust; allowlist enforced server-side) |
+| `prompt` | `-p "<prompt>"` |
 | `model` | `--model <model>` |
 | `mode=plan` | `--mode=plan` |
 | `mode=ask` | `--mode=ask` |
@@ -101,7 +101,6 @@ z.object({
 | `sandbox=false` | `--sandbox disabled` |
 | `output_format` | `--output-format <format>` |
 | `approve_mcps=true` | `--approve-mcps` |
-| `max_turns` | `--max-turns <n>` |
 
 **Success Response:**
 
