@@ -14,7 +14,7 @@ export const runAgentSchema = z.object({
   mode: z.enum(['agent', 'plan', 'ask']).default('agent'),
   workspace: z.string().optional(),
   worktree: z.string().optional(),
-  sandbox: z.boolean().optional().default(false),
+  sandbox: z.boolean().optional(),
   output_format: z.enum(['text', 'json', 'stream-json']).optional().default('text'),
   approve_mcps: z.boolean().optional().default(false),
   max_turns: z.number().int().min(1).max(100).optional(),
