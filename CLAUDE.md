@@ -37,7 +37,7 @@ Do not write code until you have read all five documents.
 
 ## Project State
 
-- **Current phase:** Phase 0 — scaffold (nothing implemented yet)
+- **Current phase:** Phase 0 — scaffold complete (local gate green; push to verify CI)
 - **Active branches:** See `docs/BRANCH_STRATEGY.md`
 - **Session tool gate:** Pending — do not implement session tools until `feat/phase-2-cli-validation` is merged and `SESSION_GATE` is recorded in `docs/TASK_LIST.md`
 
