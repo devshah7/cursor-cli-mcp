@@ -16,7 +16,13 @@
     "no-console": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-floating-promises": "error",
-    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "prettier/prettier": "error",
     "no-restricted-syntax": [
       "error",

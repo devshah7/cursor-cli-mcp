@@ -1,5 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Config } from './config.js';
 import type { IAgentExecutor } from './ports/agentExecutor.js';
 import { wrapTool, type PipelineContext } from './pipeline/toolPipeline.js';
@@ -21,7 +23,11 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
       version: '0.1.0',
       description: "MCP server for controlling Cursor's agent CLI",
     },
-    {},
+    {
+      capabilities: {
+        logging: {},
+      },
+    },
   );
 
   const ctx: PipelineContext = {
@@ -36,7 +42,25 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     mcp.registerTool(
       tool.name,
       { description: tool.description, inputSchema: tool.schema },
-      async (args) => handler(args),
+      async (args, extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => {
+        if (tool.name !== 'run_agent') {
+          return handler(args);
+        }
+        const sendNotification = (chunk: string): void => {
+          void mcp.server
+            .sendLoggingMessage(
+              {
+                level: 'debug',
+                logger: 'cursor-cli-mcp.run_agent.stdout',
+                data: { chunk },
+              },
+              extra.sessionId,
+            )
+            .catch(() => undefined);
+        };
+        const streamCtx: Partial<PipelineContext> = { sendNotification };
+        return handler(args, streamCtx);
+      },
     );
   }
 

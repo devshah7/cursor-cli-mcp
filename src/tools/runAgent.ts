@@ -33,14 +33,14 @@ export function pathArgsFromRunAgent(input: RunAgentParsed): string[] {
   return paths;
 }
 
-export function createRunAgentDescriptor(ctx: PipelineContext): ToolDescriptor<RunAgentParsed> {
+export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<RunAgentParsed> {
   return {
     name: 'run_agent',
     description:
       'Run Cursor agent CLI in non-interactive (print) mode with the given prompt and options.',
     schema: runAgentSchema as z.ZodType<RunAgentParsed>,
     pathArgs: pathArgsFromRunAgent,
-    handler: async (input: RunAgentParsed, executor: IAgentExecutor) => {
+    handler: async (input: RunAgentParsed, executor: IAgentExecutor, toolCtx: PipelineContext) => {
       const args = buildRunAgentArgs({
         prompt: input.prompt,
         model: input.model,
@@ -52,11 +52,18 @@ export function createRunAgentDescriptor(ctx: PipelineContext): ToolDescriptor<R
         approve_mcps: input.approve_mcps,
         max_turns: input.max_turns,
       });
+      const onStdoutChunk =
+        toolCtx.sendNotification !== undefined
+          ? (chunk: string): void => {
+              toolCtx.sendNotification?.(chunk);
+            }
+          : undefined;
       return await executor.run({
-        binary: ctx.agentBinaryPath,
+        binary: toolCtx.agentBinaryPath,
         args,
-        timeoutMs: ctx.agentTimeoutMs,
-        maxOutputBytes: ctx.maxOutputBytes,
+        timeoutMs: toolCtx.agentTimeoutMs,
+        maxOutputBytes: toolCtx.maxOutputBytes,
+        onStdoutChunk,
       });
     },
   };

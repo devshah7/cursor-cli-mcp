@@ -11,19 +11,23 @@ export type AgentStatusParsed = z.infer<typeof agentStatusSchema>;
 
 /** API_SPEC §3.6 — NON-fatal diagnostics: subprocess failure is usually success JSON, not MCP error. */
 export function createAgentStatusDescriptor(
-  ctx: PipelineContext,
+  _ctx: PipelineContext,
 ): ToolDescriptor<AgentStatusParsed> {
   return {
     name: 'agent_status',
     description: 'Report Cursor agent CLI authentication hints, version text, and binary path.',
     schema: agentStatusSchema as z.ZodType<AgentStatusParsed>,
     pathArgs: () => [],
-    handler: async (_input: AgentStatusParsed, executor: IAgentExecutor) => {
+    handler: async (
+      _input: AgentStatusParsed,
+      executor: IAgentExecutor,
+      toolCtx: PipelineContext,
+    ) => {
       const result = await executor.run({
-        binary: ctx.agentBinaryPath,
+        binary: toolCtx.agentBinaryPath,
         args: buildAgentStatusArgs(),
-        timeoutMs: ctx.agentTimeoutMs,
-        maxOutputBytes: ctx.maxOutputBytes,
+        timeoutMs: toolCtx.agentTimeoutMs,
+        maxOutputBytes: toolCtx.maxOutputBytes,
       });
 
       if (result.timedOut || result.exitCode === 127) {
@@ -34,7 +38,7 @@ export function createAgentStatusDescriptor(
       const stdout = result.stdout.trim();
       return {
         authenticated: result.exitCode === 0,
-        binaryPath: ctx.agentBinaryPath,
+        binaryPath: toolCtx.agentBinaryPath,
         ...(stdout !== '' ? { version: stdout, agentCliVersion: stdout } : {}),
       };
     },

@@ -37,7 +37,7 @@ Do not write code until you have read all five documents.
 
 ## Project State
 
-- **Current phase:** Phase 2 — `run_agent`, `list_models`, and `agent_status` tools implemented on `cursor/phase-2-tools` (merge to `main` when CI and manual MCP smoke pass)
+- **Current phase:** Phase 4 — security hardening merged; `run_agent` stdout streaming via MCP logging + executor `onStdoutChunk` (merge streaming PR when CI green)
 - **Active branches:** See `docs/BRANCH_STRATEGY.md`
 - **Session tool gate:** **`SESSION_GATE: FAIL`** in `docs/TASK_LIST.md` — do **not** start `feat/phase-2-tool-sessions` until a developer re-runs CLI validation locally and records **`SESSION_GATE: PASS`**
 

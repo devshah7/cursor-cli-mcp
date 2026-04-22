@@ -11,7 +11,7 @@ export interface ToolDescriptor<T = unknown> {
   description: string;
   schema: z.ZodType<T>;
   pathArgs: (input: T) => string[];
-  handler: (input: T, executor: IAgentExecutor) => Promise<unknown>;
+  handler: (input: T, executor: IAgentExecutor, ctx: PipelineContext) => Promise<unknown>;
 }
 
 export function pipelineContextFromConfig(config: Config): PipelineContext {

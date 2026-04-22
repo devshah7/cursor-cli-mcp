@@ -10,6 +10,24 @@ const tinyConfig = {
 describe('AgentCliExecutor', () => {
   const node = process.execPath;
 
+  it('invokes onStdoutChunk as stdout arrives', async () => {
+    const ex = new AgentCliExecutor(tinyConfig);
+    const chunks: string[] = [];
+    const r = await ex.run({
+      binary: node,
+      args: [
+        '-e',
+        'process.stdout.write("P1"); setTimeout(() => { process.stdout.write("P2"); process.exit(0); }, 40);',
+      ],
+      timeoutMs: 5000,
+      maxOutputBytes: 4096,
+      onStdoutChunk: (c) => chunks.push(c),
+    });
+    expect(r.exitCode).toBe(0);
+    expect(chunks.join('')).toContain('P1');
+    expect(chunks.join('')).toContain('P2');
+  });
+
   it('captures stdout on exit 0', async () => {
     const ex = new AgentCliExecutor(tinyConfig);
     const r = await ex.run({

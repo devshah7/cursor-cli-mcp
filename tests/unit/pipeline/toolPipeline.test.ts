@@ -30,7 +30,7 @@ describe('toolPipeline.wrapTool', () => {
       description: 'x',
       schema,
       pathArgs: () => [],
-      handler: async ({ msg }) => ({ echo: msg }),
+      handler: async ({ msg }, _executor, _toolCtx) => ({ echo: msg }),
     };
     const wrapped = wrapTool(descriptor, baseMock(), pc(['/tmp']));
     const out = await wrapped({ msg: 'hi' });
@@ -44,7 +44,7 @@ describe('toolPipeline.wrapTool', () => {
       description: 'x',
       schema,
       pathArgs: () => [],
-      handler: async () => ({}),
+      handler: async (_input, _executor, _toolCtx) => ({}),
     };
     const wrapped = wrapTool(descriptor, baseMock(), pc(['/tmp']));
     const out = await wrapped({ msg: '' });
@@ -59,7 +59,7 @@ describe('toolPipeline.wrapTool', () => {
       description: 'x',
       schema,
       pathArgs: () => ['/not-allowed/path'],
-      handler: async () => 'x',
+      handler: async (_input, _executor, _toolCtx) => 'x',
     };
     const wrapped = wrapTool(descriptor, baseMock(), pc(['/tmp/x']));
     const out = await wrapped({ msg: 'hi' });
@@ -74,7 +74,7 @@ describe('toolPipeline.wrapTool', () => {
       description: 'x',
       schema,
       pathArgs: () => [],
-      handler: async (): Promise<ExecutorResult> => ({
+      handler: async (_input, _executor, _toolCtx): Promise<ExecutorResult> => ({
         stdout: '',
         stderrExcerpt: 'boom',
         exitCode: 7,
@@ -97,7 +97,7 @@ describe('toolPipeline.wrapTool', () => {
       description: 'x',
       schema,
       pathArgs: () => [],
-      handler: async (): Promise<ExecutorResult> => ({
+      handler: async (_input, _executor, _toolCtx): Promise<ExecutorResult> => ({
         stdout: '',
         stderrExcerpt: '',
         exitCode: 1,
@@ -120,7 +120,7 @@ describe('toolPipeline.wrapTool', () => {
       description: 'x',
       schema,
       pathArgs: () => [],
-      handler: async () => {
+      handler: async (_input, _executor, _toolCtx) => {
         const e = new Error('missing') as NodeJS.ErrnoException;
         e.code = 'ENOENT';
         throw e;

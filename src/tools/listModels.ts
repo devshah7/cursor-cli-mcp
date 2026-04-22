@@ -37,18 +37,24 @@ export function parseModelsStdout(stdout: string): string[] {
     .filter((s) => s.length > 0);
 }
 
-export function createListModelsDescriptor(ctx: PipelineContext): ToolDescriptor<ListModelsParsed> {
+export function createListModelsDescriptor(
+  _ctx: PipelineContext,
+): ToolDescriptor<ListModelsParsed> {
   return {
     name: 'list_models',
     description: 'List model identifiers supported by the Cursor agent CLI.',
     schema: listModelsSchema as z.ZodType<ListModelsParsed>,
     pathArgs: () => [],
-    handler: async (_input: ListModelsParsed, executor: IAgentExecutor) => {
+    handler: async (
+      _input: ListModelsParsed,
+      executor: IAgentExecutor,
+      toolCtx: PipelineContext,
+    ) => {
       const result = await executor.run({
-        binary: ctx.agentBinaryPath,
+        binary: toolCtx.agentBinaryPath,
         args: buildListModelsArgs(),
-        timeoutMs: ctx.agentTimeoutMs,
-        maxOutputBytes: ctx.maxOutputBytes,
+        timeoutMs: toolCtx.agentTimeoutMs,
+        maxOutputBytes: toolCtx.maxOutputBytes,
       });
       if (result.timedOut || result.exitCode !== 0) {
         const r: ExecutorResult = result;

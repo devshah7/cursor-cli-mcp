@@ -34,7 +34,12 @@ export class AgentCliExecutor implements IAgentExecutor {
 
       tracked.add(child);
 
-      child.stdout?.on('data', (c: Buffer) => stdoutBuf.append(c));
+      child.stdout?.on('data', (c: Buffer) => {
+        stdoutBuf.append(c);
+        if (options.onStdoutChunk) {
+          options.onStdoutChunk(c.toString('utf8'));
+        }
+      });
       child.stderr?.on('data', (c: Buffer) => stderrBuf.append(c));
 
       let timedOut = false;
