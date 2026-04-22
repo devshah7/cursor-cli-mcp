@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { wrapTool } from '../../../src/pipeline/toolPipeline.js';
 import type { ToolDescriptor } from '../../../src/registry/tools.js';
 import type { ExecutorResult } from '../../../src/ports/executorTypes.js';
 import { createMockExecutor as baseMock } from '../../fixtures/mockExecutor.js';
+
+function getText(result: CallToolResult): string {
+  const c = result.content?.[0];
+  return c?.type === 'text' ? c.text : '{}';
+}
 
 const schema = z.object({ msg: z.string().min(1) });
 
@@ -21,7 +27,7 @@ describe('toolPipeline.wrapTool', () => {
     });
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).not.toBe(true);
-    expect(JSON.parse(out.content?.[0]?.text ?? '{}')).toEqual({ echo: 'hi' });
+    expect(JSON.parse(getText(out))).toEqual({ echo: 'hi' });
   });
 
   it('maps Zod failure to VALIDATION', async () => {
@@ -37,7 +43,7 @@ describe('toolPipeline.wrapTool', () => {
     });
     const out = await wrapped({ msg: '' });
     expect(out.isError).toBe(true);
-    const body = JSON.parse(out.content?.[0]?.text ?? '{}');
+    const body = JSON.parse(getText(out));
     expect(body.errorClass).toBe('VALIDATION');
   });
 
@@ -54,7 +60,7 @@ describe('toolPipeline.wrapTool', () => {
     });
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
-    const body = JSON.parse(out.content?.[0]?.text ?? '{}');
+    const body = JSON.parse(getText(out));
     expect(body.errorClass).toBe('SECURITY');
   });
 
@@ -78,7 +84,7 @@ describe('toolPipeline.wrapTool', () => {
     });
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
-    const body = JSON.parse(out.content?.[0]?.text ?? '{}');
+    const body = JSON.parse(getText(out));
     expect(body.errorClass).toBe('AGENT_ERROR');
     expect(body.exitCode).toBe(7);
   });
@@ -103,7 +109,7 @@ describe('toolPipeline.wrapTool', () => {
     });
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
-    const body = JSON.parse(out.content?.[0]?.text ?? '{}');
+    const body = JSON.parse(getText(out));
     expect(body.errorClass).toBe('TIMEOUT');
     expect(body.timedOut).toBe(true);
   });
@@ -125,7 +131,7 @@ describe('toolPipeline.wrapTool', () => {
     });
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
-    const body = JSON.parse(out.content?.[0]?.text ?? '{}');
+    const body = JSON.parse(getText(out));
     expect(body.errorClass).toBe('BINARY_NOT_FOUND');
   });
 });

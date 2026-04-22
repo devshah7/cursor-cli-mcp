@@ -105,8 +105,8 @@ function mapThrownError(err: unknown): CallToolResult {
 /**
  * Fixed pipeline: validate → security.validatePaths → handler → map result / errors.
  */
-export function wrapTool(
-  descriptor: ToolDescriptor,
+export function wrapTool<T>(
+  descriptor: ToolDescriptor<T>,
   executor: IAgentExecutor,
   ctx: PipelineContext,
 ): (args: unknown) => Promise<CallToolResult> {
