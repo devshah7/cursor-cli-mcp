@@ -54,10 +54,6 @@ export function buildAgentStatusArgs(): string[] {
   return ['status'];
 }
 
-export function buildSessionListArgs(): string[] {
-  return ['ls'];
-}
-
 export function buildSessionCreateArgs(): string[] {
   return ['create-chat'];
 }

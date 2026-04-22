@@ -4,7 +4,6 @@ import {
   buildListModelsArgs,
   buildRunAgentArgs,
   buildSessionCreateArgs,
-  buildSessionListArgs,
   buildSessionResumeArgs,
 } from '../../../src/adapters/agentCli/argBuilder.js';
 
@@ -64,10 +63,6 @@ describe('argBuilder', () => {
 
   it('buildAgentStatusArgs uses status subcommand', () => {
     expect(buildAgentStatusArgs()).toEqual(['status']);
-  });
-
-  it('buildSessionListArgs uses ls subcommand', () => {
-    expect(buildSessionListArgs()).toEqual(['ls']);
   });
 
   it('buildSessionCreateArgs uses create-chat subcommand', () => {

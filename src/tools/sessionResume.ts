@@ -29,7 +29,9 @@ export function createSessionResumeDescriptor(
   return {
     name: 'session_resume',
     description:
-      'Resume an existing agent chat session with an additional prompt (`agent -p … --resume …`).',
+      'Resume an existing agent chat session with an additional prompt (`agent -p … --resume <chatId>`). ' +
+      'Note: combining --resume with --print is not explicitly documented by Cursor — ' +
+      'behaviour is confirmed by flag inspection but not by official docs. Hanging risk same as session_create.',
     schema: sessionResumeSchema as z.ZodType<SessionResumeParsed>,
     pathArgs: () => [],
     handler: async (

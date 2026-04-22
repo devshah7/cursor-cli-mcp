@@ -65,7 +65,10 @@ export function createSessionCreateDescriptor(
 ): ToolDescriptor<SessionCreateParsed> {
   return {
     name: 'session_create',
-    description: 'Create a new empty agent chat session and return its id (`agent create-chat`).',
+    description:
+      'Create a new empty agent chat session and return its id (`agent create-chat`). ' +
+      'Returns a UUID on stdout. Known issue: process may hang after printing the ID — ' +
+      'the executor timeout is the safety net (agentTimeoutMs).',
     schema: sessionCreateSchema as z.ZodType<SessionCreateParsed>,
     pathArgs: pathArgsFromSessionCreate,
     handler: async (

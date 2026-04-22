@@ -215,17 +215,19 @@
   - Required: `args.push('--sandbox', 'enabled')` when `sandbox: true`; `args.push('--sandbox', 'disabled')` when `sandbox: false`; omit flag when `sandbox` is `undefined`
   - Update unit tests in `tests/unit/adapters/` to assert `'--sandbox', 'enabled'` appears in args
   - Acceptance: `buildRunAgentArgs({ prompt: 'x', sandbox: true })` contains `['--sandbox', 'enabled']`; all tests pass _(2026-04-22)_
-- [x] **T2.8** — Implement `src/tools/sessionList.ts`: calls `agent ls` via executor; parses stdout for session list; wire into `src/registry/tools.ts`
-  - argBuilder: add `buildSessionListArgs()` → `['ls']`
-  - Acceptance: 4 unit tests pass; tool callable from MCP host _(2026-04-22)_
+- [-] **T2.8** — ~~Implement `src/tools/sessionList.ts`~~ **CANCELLED** _(2026-04-22)_
+  - Reason: `agent ls` is an interactive TUI — it opens a full-screen keyboard-driven session picker and does not produce machine-readable stdout. No `--output-format` or `--print` flag exists for `agent ls`. Confirmed by running the binary locally and reviewing cursor.com/docs. No headless session listing available in this CLI version. File removed; feature request exists on Cursor community forum.
 - [x] **T2.9** — Implement `src/tools/sessionCreate.ts`: calls `agent create-chat` via executor; parses stdout for chat ID; returns `{ sessionId: string }`; wire into registry
-  - argBuilder: add `buildSessionCreateArgs()` → `['create-chat']`
+  - argBuilder: `buildSessionCreateArgs()` → `['create-chat']`
+  - Confirmed: returns bare UUID on one line (e.g. `8e8ddb1f-313d-4d93-9e34-a38b42198d9c`)
+  - Known issue: process may hang after printing ID — executor timeout (agentTimeoutMs) is the safety net
   - Acceptance: 4 unit tests pass; returned sessionId is a non-empty string _(2026-04-22)_
 - [x] **T2.10** — Implement `src/tools/sessionResume.ts`: calls `agent -p <prompt> --resume <chatId>` via executor; wire into registry
-  - argBuilder: add `buildSessionResumeArgs({ sessionId, prompt })` → `['-p', prompt, '--resume', sessionId]`
+  - argBuilder: `buildSessionResumeArgs({ sessionId, prompt })` → `['-p', prompt, '--resume', sessionId]`
+  - Note: `--resume + --print` combination not explicitly documented by Cursor but confirmed by flag inspection
   - Acceptance: 4 unit tests pass; tool callable from MCP host _(2026-04-22)_
-- [x] **T2.11** — Write unit tests for all three session tools (12 tests total) alongside implementation
-  - Acceptance: 12 session tool tests pass; sandbox argBuilder fix verified by test _(2026-04-22; unit suite 88 tests)_
+- [x] **T2.11** — Unit tests for session tools (8 tests: 4 sessionCreate + 4 sessionResume); argBuilder sandbox fix verified
+  - Acceptance: tests pass; sandbox argBuilder fix asserted _(2026-04-22; unit suite 80 tests after removing sessionList)_
 
 **Phase 2 Gate (all parallel branches merged + sessions if gated):**
 
