@@ -276,7 +276,8 @@
 
 ### `feat/phase-4-streaming` — PARALLEL
 
-- **T4.5** — Design streaming implementation: open a GitHub Issue titled `design: streaming output for run_agent`; document in the Issue body: (a) how chunks flow executor → tool handler → MCP `notifications/message`; (b) how aggregated fallback works when MCP client does not support notifications; (c) how streaming capability is detected from the MCP client's `initialize` capabilities; (d) proposed changes to `ExecutorOptions` and `ExecutorResult` types.
+- [~] **T4.5** — Design streaming implementation: open a GitHub Issue titled `design: streaming output for run_agent`; document in the Issue body: (a) how chunks flow executor → tool handler → MCP `notifications/message`; (b) how aggregated fallback works when MCP client does not support notifications; (c) how streaming capability is detected from the MCP client's `initialize` capabilities; (d) proposed changes to `ExecutorOptions` and `ExecutorResult` types.
+  - Status: Issue opened as [#6](https://github.com/devshah7/cursor-cli-mcp/issues/6) with `design-review` label on 2026-04-22; awaiting explicit approval comment from @devshah.
   - Acceptance: Issue exists with all four points documented AND has received explicit written approval ("LGTM" / "approved") from @devshah in a comment. **Do not start T4.6 until this acceptance is met.**
 - **T4.6** — Implement streaming support in `src/executor/index.ts`: emit chunks as they arrive from stdout
   - Acceptance: executor emits events/callbacks for partial output
