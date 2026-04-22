@@ -1,6 +1,6 @@
 # Task List: cursor-cli-mcp
 
-**Last updated:** 2026-04-21  
+**Last updated:** 2026-04-22  
 **How to use:** Agents read this file to identify their task. Mark `[ ]` → `[x]` when complete. Add completion date.
 
 ---
@@ -233,19 +233,19 @@
 
 ### `feat/phase-3-resources` — PARALLEL
 
-- **T3.1** — Implement `src/resources/cliPermissions.ts`: static markdown content for FR-R1; register with MCP server at URI `cursor-cli-mcp://resources/cli-permissions`
-  - Acceptance: resource readable from MCP host; content is > 200 chars of valid markdown
-- **T3.2** — Implement `src/resources/rulesDiscovery.ts`: static markdown content for FR-R2; register with MCP server
-  - Acceptance: resource readable from MCP host; content mentions `.cursor/rules`, `AGENTS.md`, `CLAUDE.md`
+- [x] **T3.1** — Implement `src/resources/cliPermissions.ts`: static markdown content for FR-R1; register with MCP server at URI `cursor-cli-mcp://resources/cli-permissions`
+  - Acceptance: resource readable from MCP host; content is > 200 chars of valid markdown _(2026-04-22 — merged via feat/phase-3-resources)_
+- [x] **T3.2** — Implement `src/resources/rulesDiscovery.ts`: static markdown content for FR-R2; register with MCP server
+  - Acceptance: resource readable from MCP host; content mentions `.cursor/rules`, `AGENTS.md`, `CLAUDE.md` _(2026-04-22 — merged via feat/phase-3-resources)_
 
 ### `feat/phase-3-prompts` — PARALLEL
 
-- **T3.3** — Implement `src/prompts/planOnly.ts`: prompt template for FR-P1; generates `run_agent` call with `mode: "plan"`
-  - Acceptance: template loadable from MCP host; generated args include `mode: "plan"`
-- **T3.4** — Implement `src/prompts/askOnly.ts`: prompt template for FR-P2; generates `run_agent` call with `mode: "ask"`
-  - Acceptance: template loadable; generated args include `mode: "ask"`
-- **T3.5** — Implement `src/prompts/worktreeIsolation.ts`: prompt template for FR-P3; generates `run_agent` call with `worktree` set and `sandbox: true`
-  - Acceptance: template loadable; generated args include `worktree` and `sandbox: true`
+- [x] **T3.3** — Implement `src/prompts/planOnly.ts`: prompt template for FR-P1; generates `run_agent` call with `mode: "plan"`
+  - Acceptance: template loadable from MCP host; generated args include `mode: "plan"` _(2026-04-22 — `registerPromptHandlers`)_
+- [x] **T3.4** — Implement `src/prompts/askOnly.ts`: prompt template for FR-P2; generates `run_agent` call with `mode: "ask"`
+  - Acceptance: template loadable; generated args include `mode: "ask"` _(2026-04-22)_
+- [x] **T3.5** — Implement `src/prompts/worktreeIsolation.ts`: prompt template for FR-P3; generates `run_agent` call with `worktree` set and `sandbox: true`
+  - Acceptance: template loadable; generated args include `worktree` and `sandbox: true` _(2026-04-22)_
 
 **Phase 3 Gate:**
 
