@@ -37,7 +37,7 @@ main
 ├─ feat/phase-2-cli-validation   ─┘  (cli-validation gates session branches)
 │
 ├─ feat/phase-2-tool-sessions    ──── [SERIAL after phase-2-cli-validation merged]
-│                                      **CANCELLED** until `SESSION_GATE: PASS` (see TASK_LIST.md)
+│                                      **UNBLOCKED** — redesigned around real CLI commands (2026-04-22)
 │
 │  (merge ALL phase-2 branches to main before starting Phase 3)
 │
@@ -239,7 +239,7 @@ Phase 2:  phase-2-tool-run-agent   (any order within group)
           phase-2-tool-models
           phase-2-tool-health
           phase-2-cli-validation
-          phase-2-tool-sessions    (after cli-validation, if gate passes)
+          phase-2-tool-sessions    (after cli-validation — UNBLOCKED, see branch spec)
 Phase 3:  phase-3-resources   (either order)
           phase-3-prompts
 Phase 4:  phase-4-security    (either order)
