@@ -56,7 +56,7 @@
 - [x] `npm run typecheck` exits 0 _(2026-04-21)_
 - [x] `npm run build` exits 0 and produces `dist/` _(2026-04-21)_
 - [x] `npm run test:unit` exits 0 _(2026-04-21)_
-- [ ] CI pipeline green on GitHub Actions
+- [x] CI pipeline green on GitHub Actions _(2026-04-22 — fixed in PR #9)_
 - [x] Directory structure matches ARCHITECTURE.md section 2 exactly _(2026-04-21)_
 
 ---
@@ -135,7 +135,7 @@
 
 - [x] Full unit test suite passes _(2026-04-22 — 40 tests)_
 - [x] MCP initialize smoke test passes < 500ms _(2026-04-22)_
-- [ ] CI green _(push to verify)_
+- [x] CI green _(2026-04-22 — confirmed green after PR #9 fix)_
 
 ---
 
