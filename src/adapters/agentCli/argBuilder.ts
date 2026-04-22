@@ -11,11 +11,13 @@ export interface RunAgentInput {
   sandbox?: boolean;
   output_format?: 'text' | 'json' | 'stream-json';
   approve_mcps?: boolean;
-  max_turns?: number;
 }
 
 export function buildRunAgentArgs(input: RunAgentInput): string[] {
   const args: string[] = ['-p', input.prompt];
+  // Always pass --trust: workspace trust is already enforced by WORKSPACE_ALLOWLIST
+  // on the MCP server side; the CLI prompt would otherwise block non-interactive use.
+  args.push('--trust');
   if (input.model !== undefined) {
     args.push('--model', input.model);
   }
@@ -39,9 +41,6 @@ export function buildRunAgentArgs(input: RunAgentInput): string[] {
   args.push('--output-format', fmt);
   if (input.approve_mcps === true) {
     args.push('--approve-mcps');
-  }
-  if (input.max_turns !== undefined) {
-    args.push('--max-turns', String(input.max_turns));
   }
   return args;
 }
