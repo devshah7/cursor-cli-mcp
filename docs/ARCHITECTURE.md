@@ -192,8 +192,22 @@ This is the **single place** to add cross-cutting concerns. Rate limiting, audit
 **Exports one function:**
 
 ```typescript
-function wrapTool(descriptor: ToolDescriptor, executor: IAgentExecutor): McpToolHandler
+function wrapTool(descriptor: ToolDescriptor, executor: IAgentExecutor, ctx: PipelineContext): McpToolHandler
 ```
+
+**`PipelineContext`** — per-request config injected by `server.ts`:
+
+```typescript
+interface PipelineContext {
+  workspaceAllowlist: string[];
+  agentBinaryPath: string;
+  agentTimeoutMs: number;
+  maxOutputBytes: number;
+  sendNotification?: (chunk: string) => void;  // Phase 4 streaming — undefined = aggregated-only fallback
+}
+```
+
+`sendNotification` is created by `server.ts` (Layer 4) and bound to the MCP transport. Tool handlers receive it through `PipelineContext` and never import the MCP SDK transport directly. When `undefined`, the tool handler takes the aggregated-only path unchanged.
 
 ---
 
@@ -291,6 +305,7 @@ interface ExecutorOptions {
   args: string[];
   timeoutMs: number;
   maxOutputBytes: number;
+  onStdoutChunk?: (chunk: string) => void;  // Phase 4 streaming — called per chunk before process exit
 }
 
 interface ExecutorResult {

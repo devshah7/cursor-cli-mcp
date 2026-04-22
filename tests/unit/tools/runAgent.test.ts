@@ -135,4 +135,80 @@ describe('run_agent tool', () => {
     expect(out.isError).toBe(true);
     expect(JSON.parse(getText(out)).errorClass).toBe('BINARY_NOT_FOUND');
   });
+
+  it('path traversal via workspace returns SECURITY error', async () => {
+    const executor = new MockExecutor(async () =>
+      Promise.resolve({
+        stdout: '',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      }),
+    );
+    const blocked = pipelineContextFromConfig(baseConfig({ workspaceAllowlist: ['/allowed'] }));
+    const wrapped = wrapTool(createRunAgentDescriptor(blocked), executor, blocked);
+    const out = await wrapped({
+      prompt: 'x',
+      workspace: '/allowed/../../../../etc/passwd',
+    });
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('SECURITY');
+  });
+
+  it('path traversal via worktree returns SECURITY error', async () => {
+    const executor = new MockExecutor(async () =>
+      Promise.resolve({
+        stdout: '',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      }),
+    );
+    const blocked = pipelineContextFromConfig(baseConfig({ workspaceAllowlist: ['/allowed'] }));
+    const wrapped = wrapTool(createRunAgentDescriptor(blocked), executor, blocked);
+    const out = await wrapped({
+      prompt: 'x',
+      worktree: '../../../',
+    });
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('SECURITY');
+  });
+
+  it('prompt injection attempt via model arg returns VALIDATION', async () => {
+    let runs = 0;
+    const executor = new MockExecutor(async () => {
+      runs++;
+      throw new Error('should not run');
+    });
+    const wrapped = wrapTool(createRunAgentDescriptor(ctx), executor, ctx);
+    const out = await wrapped({ prompt: 'hello', model: 'foo; rm -rf /' });
+    expect(runs).toBe(0);
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('VALIDATION');
+  });
+
+  it('shell metacharacters in prompt are passed as raw spawn arg', async () => {
+    let capturedPromptArg = '';
+    const executor = new MockExecutor(async (opts) => {
+      const pIndex = opts.args.indexOf('-p');
+      capturedPromptArg = pIndex >= 0 ? (opts.args[pIndex + 1] ?? '') : '';
+      return {
+        stdout: 'ok',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      };
+    });
+    const wrapped = wrapTool(createRunAgentDescriptor(ctx), executor, ctx);
+    const prompt = 'hello; echo hacked && $(uname)';
+    const out = await wrapped({ prompt });
+    expect(out.isError).not.toBe(true);
+    expect(capturedPromptArg).toBe(prompt);
+  });
 });

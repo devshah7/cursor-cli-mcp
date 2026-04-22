@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SecurityError, resolveAndCheck, validatePaths } from '../../src/security.js';
 
 describe('security.validatePaths', () => {
@@ -56,6 +56,11 @@ describe('security.validatePaths', () => {
     validatePaths([base], [withSlash]);
   });
 
+  it('handles filesystem root allowlist entry', () => {
+    const root = path.parse(base).root;
+    validatePaths([root], [root]);
+  });
+
   it('symlink resolution checks target when present', () => {
     const dir = fs.mkdtempSync(path.join(base, 'sym-'));
     const target = path.join(dir, 'target');
@@ -72,6 +77,21 @@ describe('security.validatePaths', () => {
       resolveAndCheck(link, [target]);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to string matching when realpath lookup throws', () => {
+    const existsSpy = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+    const realpathSpy = vi.spyOn(fs, 'realpathSync').mockImplementation(() => {
+      throw new Error('realpath unavailable');
+    });
+    try {
+      const allowed = path.resolve('/tmp/allow-root');
+      const candidate = path.resolve('/tmp/allow-root/project');
+      expect(resolveAndCheck(candidate, [allowed])).toBe(candidate);
+    } finally {
+      existsSpy.mockRestore();
+      realpathSpy.mockRestore();
     }
   });
 });

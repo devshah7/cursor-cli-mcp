@@ -20,6 +20,27 @@ function shouldLog(cfg: Pick<Config, 'logLevel'>, level: LogLevel): boolean {
   return LEVEL_ORDER[level] >= LEVEL_ORDER[cfg.logLevel];
 }
 
+function sanitizeMeta(
+  cfg: Pick<Config, 'logPrompts'>,
+  level: LogLevel,
+  meta?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!meta) {
+    return undefined;
+  }
+  if (!('prompt' in meta) || typeof meta.prompt !== 'string') {
+    return meta;
+  }
+
+  if (cfg.logPrompts && level === 'debug') {
+    return meta;
+  }
+
+  const rest = { ...meta };
+  delete rest.prompt;
+  return { ...rest, promptLength: meta.prompt.length };
+}
+
 /** Writes JSON lines to stderr only — never stdout (MCP transport uses stdout). */
 export function createLogger(cfg: Pick<Config, 'logLevel' | 'logPrompts'>): Logger {
   const write = (level: LogLevel, msg: string, meta?: Record<string, unknown>) => {
@@ -30,7 +51,7 @@ export function createLogger(cfg: Pick<Config, 'logLevel' | 'logPrompts'>): Logg
       level,
       msg,
       ts: new Date().toISOString(),
-      ...(meta ?? {}),
+      ...(sanitizeMeta(cfg, level, meta) ?? {}),
     });
     process.stderr.write(`${line}\n`);
   };
