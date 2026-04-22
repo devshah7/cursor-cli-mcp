@@ -17,7 +17,6 @@ export const runAgentSchema = z.object({
   sandbox: z.boolean().optional(),
   output_format: z.enum(['text', 'json', 'stream-json']).optional().default('text'),
   approve_mcps: z.boolean().optional().default(false),
-  max_turns: z.number().int().min(1).max(100).optional(),
 });
 
 export type RunAgentParsed = z.infer<typeof runAgentSchema>;
@@ -50,7 +49,6 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
         sandbox: input.sandbox,
         output_format: input.output_format,
         approve_mcps: input.approve_mcps,
-        max_turns: input.max_turns,
       });
       const onStdoutChunk =
         toolCtx.sendNotification !== undefined

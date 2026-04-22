@@ -18,12 +18,12 @@ describe('argBuilder', () => {
       sandbox: true,
       output_format: 'json',
       approve_mcps: true,
-      max_turns: 3,
     });
     expect(args).toContain('-p');
     expect(args).toContain('hi');
     expect(args).toEqual(
       expect.arrayContaining([
+        '--trust',
         '--model',
         'm1',
         '--mode=plan',
@@ -36,10 +36,13 @@ describe('argBuilder', () => {
         '--output-format',
         'json',
         '--approve-mcps',
-        '--max-turns',
-        '3',
       ]),
     );
+  });
+
+  it('buildRunAgentArgs always includes --trust', () => {
+    const args = buildRunAgentArgs({ prompt: 'x' });
+    expect(args).toContain('--trust');
   });
 
   it('buildRunAgentArgs pushes --sandbox disabled when sandbox is false', () => {
