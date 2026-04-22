@@ -276,14 +276,14 @@
 
 ### `feat/phase-4-streaming` — PARALLEL
 
-- **T4.5** — Design streaming implementation: open a GitHub Issue titled `design: streaming output for run_agent`; document in the Issue body: (a) how chunks flow executor → tool handler → MCP `notifications/message`; (b) how aggregated fallback works when MCP client does not support notifications; (c) how streaming capability is detected from the MCP client's `initialize` capabilities; (d) proposed changes to `ExecutorOptions` and `ExecutorResult` types.
-  - Acceptance: Issue exists with all four points documented AND has received explicit written approval ("LGTM" / "approved") from @devshah in a comment. **Do not start T4.6 until this acceptance is met.**
-- **T4.6** — Implement streaming support in `src/executor/index.ts`: emit chunks as they arrive from stdout
-  - Acceptance: executor emits events/callbacks for partial output
-- **T4.7** — Update `src/tools/runAgent.ts` to use streaming when client supports it; maintain aggregated response as fallback
-  - Acceptance: first chunk delivered to MCP client < 2s for a prompt that produces output
-- **T4.8** — Write streaming tests
-  - Acceptance: tests verify partial output delivery before subprocess completion
+- [x] **T4.5** — Design streaming implementation: open a GitHub Issue titled `design: streaming output for run_agent`; document in the Issue body: (a) how chunks flow executor → tool handler → MCP `notifications/message`; (b) how aggregated fallback works when MCP client does not support notifications; (c) how streaming capability is detected from the MCP client's `initialize` capabilities; (d) proposed changes to `ExecutorOptions` and `ExecutorResult` types.
+  - Acceptance: Issue exists with all four points documented AND has received explicit written approval ("LGTM" / "approved") from @devshah in a comment. **Do not start T4.6 until this acceptance is met.** _(2026-04-22 — [#6](https://github.com/devshah7/cursor-cli-mcp/issues/6) approved)_
+- [x] **T4.6** — Implement streaming support in `src/adapters/agentCli/executor.ts`: emit chunks as they arrive from stdout
+  - Acceptance: executor emits events/callbacks for partial output _(2026-04-22 — `ExecutorOptions.onStdoutChunk`)_
+- [x] **T4.7** — Update `src/tools/runAgent.ts` to use streaming when client supports it; maintain aggregated response as fallback
+  - Acceptance: first chunk delivered to MCP client < 2s for a prompt that produces output _(2026-04-22 — `run_agent` wires `sendLoggingMessage` chunks when server advertises `logging`; sub‑2s requires live agent + MCP host)_
+- [x] **T4.8** — Write streaming tests
+  - Acceptance: tests verify partial output delivery before subprocess completion _(2026-04-22 — executor + `run_agent` unit tests)_
 
 **Phase 4 Gate (final release gate):**
 

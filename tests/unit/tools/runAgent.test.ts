@@ -191,6 +191,32 @@ describe('run_agent tool', () => {
     expect(JSON.parse(getText(out)).errorClass).toBe('VALIDATION');
   });
 
+  it('forwards stdout chunks when sendNotification is injected', async () => {
+    const chunks: string[] = [];
+    const executor = new MockExecutor(async (opts) => {
+      opts.onStdoutChunk?.('a');
+      opts.onStdoutChunk?.('b');
+      return {
+        stdout: 'ab',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      };
+    });
+    const wrapped = wrapTool(createRunAgentDescriptor(ctx), executor, ctx);
+    await wrapped(
+      { prompt: 'hi' },
+      {
+        sendNotification: (c: string) => {
+          chunks.push(c);
+        },
+      },
+    );
+    expect(chunks).toEqual(['a', 'b']);
+  });
+
   it('shell metacharacters in prompt are passed as raw spawn arg', async () => {
     let capturedPromptArg = '';
     const executor = new MockExecutor(async (opts) => {

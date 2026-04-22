@@ -12,6 +12,8 @@ export interface PipelineContext {
   agentBinaryPath: string;
   agentTimeoutMs: number;
   maxOutputBytes: number;
+  /** Phase 4 streaming — forward `run_agent` stdout chunks to MCP client; undefined = aggregated-only. */
+  sendNotification?: (chunk: string) => void;
 }
 
 function authLike(stderr: string): boolean {
@@ -113,12 +115,13 @@ export function wrapTool<T>(
   descriptor: ToolDescriptor<T>,
   executor: IAgentExecutor,
   ctx: PipelineContext,
-): (args: unknown) => Promise<CallToolResult> {
-  return async (args: unknown) => {
+): (args: unknown, ctxOverrides?: Partial<PipelineContext>) => Promise<CallToolResult> {
+  return async (args: unknown, ctxOverrides?: Partial<PipelineContext>) => {
     try {
+      const merged: PipelineContext = { ...ctx, ...(ctxOverrides ?? {}) };
       const parsed = descriptor.schema.parse(args);
-      validatePaths(descriptor.pathArgs(parsed), ctx.workspaceAllowlist);
-      const raw = await descriptor.handler(parsed, executor);
+      validatePaths(descriptor.pathArgs(parsed), merged.workspaceAllowlist);
+      const raw = await descriptor.handler(parsed, executor, merged);
       if (isExecutorResult(raw)) {
         return mapExecutorOutcome(raw);
       }
