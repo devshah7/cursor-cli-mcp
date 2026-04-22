@@ -3,7 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { Config } from './config.js';
 import type { IAgentExecutor } from './ports/agentExecutor.js';
 import { wrapTool, type PipelineContext } from './pipeline/toolPipeline.js';
-import { ALL_PROMPTS } from './registry/prompts.js';
+import { registerPromptHandlers } from './registry/prompts.js';
 import { ALL_RESOURCES } from './registry/resources.js';
 import { buildToolDescriptors } from './registry/tools.js';
 
@@ -51,21 +51,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     );
   }
 
-  for (const p of ALL_PROMPTS) {
-    if (p.argsSchema) {
-      mcp.registerPrompt(
-        p.name,
-        { description: p.description, argsSchema: p.argsSchema },
-        async () => ({
-          messages: [],
-        }),
-      );
-    } else {
-      mcp.registerPrompt(p.name, { description: p.description ?? p.name }, async () => ({
-        messages: [],
-      }));
-    }
-  }
+  registerPromptHandlers(mcp);
 
   const transport = new StdioServerTransport();
   await mcp.connect(transport);
