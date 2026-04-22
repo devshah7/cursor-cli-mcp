@@ -6,8 +6,12 @@ import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
 import { SecurityError, validatePaths } from '../security.js';
 
+/** Per-request tooling context from `Config` — passed into tool factories and `wrapTool`. */
 export interface PipelineContext {
   workspaceAllowlist: string[];
+  agentBinaryPath: string;
+  agentTimeoutMs: number;
+  maxOutputBytes: number;
 }
 
 function authLike(stderr: string): boolean {

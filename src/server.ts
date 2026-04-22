@@ -5,7 +5,7 @@ import type { IAgentExecutor } from './ports/agentExecutor.js';
 import { wrapTool, type PipelineContext } from './pipeline/toolPipeline.js';
 import { ALL_PROMPTS } from './registry/prompts.js';
 import { ALL_RESOURCES } from './registry/resources.js';
-import { ALL_TOOLS } from './registry/tools.js';
+import { buildToolDescriptors } from './registry/tools.js';
 
 /**
  * Wire MCP transport + registries. Transport owns stdout — never log to stdout here.
@@ -24,9 +24,14 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     {},
   );
 
-  const ctx: PipelineContext = { workspaceAllowlist: config.workspaceAllowlist };
+  const ctx: PipelineContext = {
+    workspaceAllowlist: config.workspaceAllowlist,
+    agentBinaryPath: config.agentBinaryPath,
+    agentTimeoutMs: config.agentTimeoutMs,
+    maxOutputBytes: config.maxOutputBytes,
+  };
 
-  for (const tool of ALL_TOOLS) {
+  for (const tool of buildToolDescriptors(config)) {
     const handler = wrapTool(tool, executor, ctx);
     mcp.registerTool(
       tool.name,

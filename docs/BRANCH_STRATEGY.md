@@ -1,6 +1,6 @@
 # Branch Strategy: cursor-cli-mcp
 
-**Last updated:** 2026-04-21  
+**Last updated:** 2026-04-22  
 **Status:** Authoritative — all agents must follow this branching model exactly.
 
 ---
@@ -37,7 +37,7 @@ main
 ├─ feat/phase-2-cli-validation   ─┘  (cli-validation gates session branches)
 │
 ├─ feat/phase-2-tool-sessions    ──── [SERIAL after phase-2-cli-validation merged]
-│                                      GATED: only proceed if CLI validation passes
+│                                      **CANCELLED** until `SESSION_GATE: PASS` (see TASK_LIST.md)
 │
 │  (merge ALL phase-2 branches to main before starting Phase 3)
 │
@@ -131,8 +131,9 @@ main
 - **PR checklist override:** This branch is exempt from `npm run test:unit` and `npm run build` gate requirements (no code changed). Only `npm run lint` on the markdown file is required.
 - **PR title format:** `research(phase-2): CLI session command validation`
 
-#### `feat/phase-2-tool-sessions` — GATED
+#### `feat/phase-2-tool-sessions` — GATED — **currently CANCELLED**
 
+- **Status (2026-04-22):** Cancelled until `SESSION_GATE: PASS` is recorded in `docs/TASK_LIST.md`. Current gate: **`SESSION_GATE: FAIL`** (session CLI could not be validated without a runnable `agent` binary).
 - **Depends on:** `feat/phase-2-cli-validation` merged AND `SESSION_GATE: PASS`
 - **Parallel with:** nothing (serial)
 - **Concerns:** `session_list`, `session_create`, `session_resume` tools

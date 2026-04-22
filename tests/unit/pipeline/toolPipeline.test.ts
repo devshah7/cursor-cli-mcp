@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { wrapTool } from '../../../src/pipeline/toolPipeline.js';
+import type { PipelineContext } from '../../../src/pipeline/toolPipeline.js';
 import type { ToolDescriptor } from '../../../src/registry/tools.js';
 import type { ExecutorResult } from '../../../src/ports/executorTypes.js';
 import { createMockExecutor as baseMock } from '../../fixtures/mockExecutor.js';
@@ -13,6 +14,15 @@ function getText(result: CallToolResult): string {
 
 const schema = z.object({ msg: z.string().min(1) });
 
+function pc(allowlist: string[]): PipelineContext {
+  return {
+    workspaceAllowlist: allowlist,
+    agentBinaryPath: '/usr/local/bin/agent',
+    agentTimeoutMs: 5000,
+    maxOutputBytes: 4096,
+  };
+}
+
 describe('toolPipeline.wrapTool', () => {
   it('happy path returns JSON text payload', async () => {
     const descriptor: ToolDescriptor<{ msg: string }> = {
@@ -22,9 +32,7 @@ describe('toolPipeline.wrapTool', () => {
       pathArgs: () => [],
       handler: async ({ msg }) => ({ echo: msg }),
     };
-    const wrapped = wrapTool(descriptor, baseMock(), {
-      workspaceAllowlist: ['/tmp'],
-    });
+    const wrapped = wrapTool(descriptor, baseMock(), pc(['/tmp']));
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).not.toBe(true);
     expect(JSON.parse(getText(out))).toEqual({ echo: 'hi' });
@@ -38,9 +46,7 @@ describe('toolPipeline.wrapTool', () => {
       pathArgs: () => [],
       handler: async () => ({}),
     };
-    const wrapped = wrapTool(descriptor, baseMock(), {
-      workspaceAllowlist: ['/tmp'],
-    });
+    const wrapped = wrapTool(descriptor, baseMock(), pc(['/tmp']));
     const out = await wrapped({ msg: '' });
     expect(out.isError).toBe(true);
     const body = JSON.parse(getText(out));
@@ -55,9 +61,7 @@ describe('toolPipeline.wrapTool', () => {
       pathArgs: () => ['/not-allowed/path'],
       handler: async () => 'x',
     };
-    const wrapped = wrapTool(descriptor, baseMock(), {
-      workspaceAllowlist: ['/tmp/x'],
-    });
+    const wrapped = wrapTool(descriptor, baseMock(), pc(['/tmp/x']));
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
     const body = JSON.parse(getText(out));
@@ -79,9 +83,7 @@ describe('toolPipeline.wrapTool', () => {
         durationMs: 1,
       }),
     };
-    const wrapped = wrapTool(descriptor, baseMock(), {
-      workspaceAllowlist: [],
-    });
+    const wrapped = wrapTool(descriptor, baseMock(), pc([]));
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
     const body = JSON.parse(getText(out));
@@ -104,9 +106,7 @@ describe('toolPipeline.wrapTool', () => {
         durationMs: 1,
       }),
     };
-    const wrapped = wrapTool(descriptor, baseMock(), {
-      workspaceAllowlist: [],
-    });
+    const wrapped = wrapTool(descriptor, baseMock(), pc([]));
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
     const body = JSON.parse(getText(out));
@@ -126,9 +126,7 @@ describe('toolPipeline.wrapTool', () => {
         throw e;
       },
     };
-    const wrapped = wrapTool(descriptor, baseMock(), {
-      workspaceAllowlist: [],
-    });
+    const wrapped = wrapTool(descriptor, baseMock(), pc([]));
     const out = await wrapped({ msg: 'hi' });
     expect(out.isError).toBe(true);
     const body = JSON.parse(getText(out));

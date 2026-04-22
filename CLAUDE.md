@@ -37,9 +37,9 @@ Do not write code until you have read all five documents.
 
 ## Project State
 
-- **Current phase:** Phase 1 — infrastructure complete locally (Phase 2 tools next after merge & CI green)
+- **Current phase:** Phase 2 — `run_agent`, `list_models`, and `agent_status` tools implemented on `cursor/phase-2-tools` (merge to `main` when CI and manual MCP smoke pass)
 - **Active branches:** See `docs/BRANCH_STRATEGY.md`
-- **Session tool gate:** Pending — do not implement session tools until `feat/phase-2-cli-validation` is merged and `SESSION_GATE` is recorded in `docs/TASK_LIST.md`
+- **Session tool gate:** **`SESSION_GATE: FAIL`** in `docs/TASK_LIST.md` — do **not** start `feat/phase-2-tool-sessions` until a developer re-runs CLI validation locally and records **`SESSION_GATE: PASS`**
 
 ---
 
@@ -64,7 +64,7 @@ Cross-Cutting:            config.ts · security.ts · errors.ts · logger.ts
 5. `src/adapters/agentCli/` has no dependency on MCP SDK types or `src/tools/`.
 6. Tool handlers have no dependency on each other or on `src/adapters/`.
 7. CLI flag names (`--mode`, `--workspace`, etc.) live ONLY in `src/adapters/agentCli/argBuilder.ts`.
-8. Adding a new tool: create `src/tools/newTool.ts` + one line in `src/registry/tools.ts`. Nothing else changes.
+8. Adding a new tool: create `src/tools/newTool.ts` + register it in `buildToolDescriptors()` in `src/registry/tools.ts`. Nothing else changes.
 
 ---
 
@@ -75,7 +75,7 @@ Cross-Cutting:            config.ts · security.ts · errors.ts · logger.ts
 | `src/index.ts` | Transport | Composition root — DI wiring only |
 | `src/server.ts` | Transport | MCP SDK adapter — reads registries, no business logic |
 | `src/pipeline/toolPipeline.ts` | Application | validate → security → execute → map (one place for cross-cutting) |
-| `src/registry/tools.ts` | Application | ALL_TOOLS array — server reads this, never hardcodes tools |
+| `src/registry/tools.ts` | Application | `buildToolDescriptors(config)` — server registers tools from config, never hardcodes handlers |
 | `src/tools/*.ts` | Application | One file per MCP tool: schema + pure handler only |
 | `src/resources/*.ts` | Application | Static MCP resource content |
 | `src/prompts/*.ts` | Application | MCP prompt templates |
