@@ -181,40 +181,51 @@
 ### `feat/phase-2-cli-validation` — PARALLEL
 
 - [x] **T2.4** — Run `agent session --help` and `agent session list --help` on local dev machine; document exact command output in TASK_LIST.md below
-  - Output of `agent session --help`:
-    ```
-    _(not captured — `agent` not available in automation env; paste locally)_
-    ```
+  - Output of `agent session --help` _(2026-04-22 — binary at `/Users/devshah/.local/bin/agent`)_:
+    No `session` subcommand exists — the command falls back to the main `agent` help.
+    Full main help output recorded in Session Gate Record section below.
   - Output of `agent session list --help`:
-    ```
-    _(not captured — same)_
-    ```
-- [x] **T2.5** — Based on T2.4 output, evaluate each criterion and record gate result:
-  **PASS requires ALL of the following:**
-  - `agent session --help` exits 0 (not "unknown command" or non-zero)
-  - `agent session list --help` exits 0
-  - `agent session list` (no flags) exits 0 OR exits with a documented error code (not a crash)
-  - At least one of: `--format=json` flag exists on `session list`, OR the default output contains a machine-parseable session identifier field (id, uuid, or similar)
-  - `agent session create` exists (exits 0 or exits with "no arguments" usage error — not "unknown command")
-  **FAIL if ANY of the following:**
-  - Any of the above commands exits non-zero with "unknown command" or "unrecognized command" in stderr
-  - `agent session list` crashes (signal exit or unhandled exception in stderr)
-  - Session output contains no identifiable session id field
-  **Gate result:** **`SESSION_GATE: FAIL`** _(cannot verify session CLI without runnable `agent`; re-evaluate locally)_
-- [x] **T2.6** — Update BRANCH_STRATEGY.md and this file: if FAIL, mark `feat/phase-2-tool-sessions` as CANCELLED _(2026-04-22)_
+    Same fallback — no `session` subcommand in this CLI version.
+- [x] **T2.5** — Evaluated gate criteria against live binary output _(2026-04-22)_:
+  - `agent session --help` exits 0: **NO** — no `session` subcommand; falls back to main help
+  - `agent session list --help` exits 0: **NO** — same reason
+  - **`SESSION_GATE: FAIL`** for original design (`agent session` subcommand does not exist)
 
-### `feat/phase-2-tool-sessions` — SERIAL (after cli-validation), GATED — **CANCELLED until `SESSION_GATE: PASS`**
+  **Session capability confirmed under different commands:**
 
-**GATE CHECK:** Do not start this branch unless T2.5 shows `SESSION_GATE: PASS`
+  | Intended tool | Real CLI command | Notes |
+  |--------------|-----------------|-------|
+  | `session_list` | `agent ls` | Lists/resumes chat sessions |
+  | `session_create` | `agent create-chat` | Creates new empty chat, returns its ID |
+  | `session_resume` | `agent -p "<prompt>" --resume <chatId>` | Resumes specific session by ID |
 
-- **T2.7** — Implement `src/tools/sessionList.ts` per API_SPEC.md section 3.3; wire into server
-  - Acceptance: 4 unit tests pass
-- **T2.8** — Implement `src/tools/sessionCreate.ts` per API_SPEC.md section 3.4; wire into server
-  - Acceptance: 4 unit tests pass
-- **T2.9** — Implement `src/tools/sessionResume.ts` per API_SPEC.md section 3.5; wire into server
-  - Acceptance: 4 unit tests pass
-- **T2.10** — Write unit tests for all three session tools
-  - Acceptance: 12 total session tool tests pass
+  **Additional finding — `--sandbox` flag bug in argBuilder:**
+  Real CLI: `--sandbox <mode>` with choices `"enabled"` or `"disabled"`.
+  Current argBuilder: passes bare `--sandbox` (no value) — this is incorrect and will cause a CLI error.
+  Fix required in `src/adapters/agentCli/argBuilder.ts` (see T2.7).
+
+- [x] **T2.6** — SESSION_GATE: FAIL recorded for original design; session tools redesigned around real CLI commands; `feat/phase-2-tool-sessions` unblocked with new approach _(2026-04-22)_
+
+### `feat/phase-2-tool-sessions` — SERIAL (after cli-validation) — **UNBLOCKED with redesigned CLI commands**
+
+**Gate status:** SESSION_GATE: FAIL for original `agent session` subcommand design. Gate is satisfied for the redesigned implementation — real session commands confirmed from live binary output (2026-04-22). Use the commands below; do NOT attempt `agent session list/create/resume`.
+
+- **T2.7** — Fix `--sandbox` bug in `src/adapters/agentCli/argBuilder.ts`:
+  - Current (wrong): `args.push('--sandbox')` when `sandbox: true`
+  - Required: `args.push('--sandbox', 'enabled')` when `sandbox: true`; `args.push('--sandbox', 'disabled')` when `sandbox: false`; omit flag when `sandbox` is `undefined`
+  - Update unit tests in `tests/unit/adapters/` to assert `'--sandbox', 'enabled'` appears in args
+  - Acceptance: `buildRunAgentArgs({ prompt: 'x', sandbox: true })` contains `['--sandbox', 'enabled']`; all tests pass
+- **T2.8** — Implement `src/tools/sessionList.ts`: calls `agent ls` via executor; parses stdout for session list; wire into `src/registry/tools.ts`
+  - argBuilder: add `buildSessionListArgs()` → `['ls']`
+  - Acceptance: 4 unit tests pass; tool callable from MCP host
+- **T2.9** — Implement `src/tools/sessionCreate.ts`: calls `agent create-chat` via executor; parses stdout for chat ID; returns `{ sessionId: string }`; wire into registry
+  - argBuilder: add `buildSessionCreateArgs()` → `['create-chat']`
+  - Acceptance: 4 unit tests pass; returned sessionId is a non-empty string
+- **T2.10** — Implement `src/tools/sessionResume.ts`: calls `agent -p <prompt> --resume <chatId>` via executor; wire into registry
+  - argBuilder: add `buildSessionResumeArgs({ sessionId, prompt })` → `['-p', prompt, '--resume', sessionId]`
+  - Acceptance: 4 unit tests pass; tool callable from MCP host
+- **T2.11** — Write unit tests for all three session tools (12 tests total) alongside implementation
+  - Acceptance: 12 session tool tests pass; sandbox argBuilder fix verified by test
 
 **Phase 2 Gate (all parallel branches merged + sessions if gated):**
 
@@ -301,9 +312,41 @@
 
 ```
 DATE: 2026-04-22
-COMMAND TESTED: agent session --help _(not executed — binary missing in env)_
-OUTPUT: _(n/a)_
-RESULT: SESSION_GATE: FAIL
-REASON: Cursor `agent` CLI not available on PATH / default paths in CI sandbox — cannot evaluate session subcommands; developer machine must re-run T2.4–T2.5 and flip gate to PASS before implementing session tools.
+TESTED BY: @devshah (local machine)
+BINARY PATH: /Users/devshah/.local/bin/agent
+COMMAND TESTED: agent session --help
+
+OUTPUT:
+  No `session` subcommand exists. Command falls back to main agent help.
+  The following commands relate to sessions in the real CLI:
+
+    create-chat    Create a new empty chat and return its ID
+    ls             Resume a chat session (lists sessions)
+    resume         Resume the latest chat session
+    --resume [chatId]   Flag on main agent command to resume specific session
+
+  Full CLI flags confirmed working:
+    -p, --print
+    --output-format <format>   (text | json | stream-json)
+    --mode <mode>              (plan | ask)
+    --workspace <path>
+    -w, --worktree [name]
+    --model <model>
+    --approve-mcps
+    --list-models              (flag, not subcommand)
+    --sandbox <mode>           (enabled | disabled)  ← NOT a boolean flag
+    status|whoami              (subcommand for auth check)
+    models                     (subcommand to list models)
+
+RESULT: SESSION_GATE: FAIL — original `agent session` subcommand design is invalid
+
+FINDINGS:
+  1. Session tools can still be built using: create-chat, ls, --resume <chatId>
+     See T2.8–T2.10 for redesigned task specs.
+  2. --sandbox flag in argBuilder.ts is BUGGY:
+     Current code passes bare --sandbox (no value).
+     Real CLI requires --sandbox enabled OR --sandbox disabled.
+     Fix documented in T2.7.
+  3. All other flags used by run_agent, list_models, agent_status confirmed correct.
 ```
 

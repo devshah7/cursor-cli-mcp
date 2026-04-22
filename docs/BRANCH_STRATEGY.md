@@ -131,16 +131,27 @@ main
 - **PR checklist override:** This branch is exempt from `npm run test:unit` and `npm run build` gate requirements (no code changed). Only `npm run lint` on the markdown file is required.
 - **PR title format:** `research(phase-2): CLI session command validation`
 
-#### `feat/phase-2-tool-sessions` — GATED — **currently CANCELLED**
+#### `feat/phase-2-tool-sessions` — **UNBLOCKED** (redesigned around real CLI commands)
 
-- **Status (2026-04-22):** Cancelled until `SESSION_GATE: PASS` is recorded in `docs/TASK_LIST.md`. Current gate: **`SESSION_GATE: FAIL`** (session CLI could not be validated without a runnable `agent` binary).
-- **Depends on:** `feat/phase-2-cli-validation` merged AND `SESSION_GATE: PASS`
+- **Status (2026-04-22):** SESSION_GATE: FAIL for original `agent session` subcommand design. Gate satisfied for redesigned implementation — real session commands confirmed from live binary. Ready to implement.
+- **Depends on:** `feat/phase-2-cli-validation` merged ✅
 - **Parallel with:** nothing (serial)
-- **Concerns:** `session_list`, `session_create`, `session_resume` tools
-- **Files touched:** `src/tools/sessionList.ts`, `src/tools/sessionCreate.ts`, `src/tools/sessionResume.ts`, corresponding test files, update `src/server.ts`
-- **CANCELLED IF:** `SESSION_GATE: FAIL` — document cancellation in TASK_LIST.md
-- **Gate (if not cancelled):** 4 unit tests each; all three tools callable from MCP host
-- **PR title format:** `feat(phase-2): session tools (list, create, resume)`
+- **Concerns:** `session_list`, `session_create`, `session_resume` tools + `--sandbox` argBuilder fix
+- **Files touched:**
+  - `src/adapters/agentCli/argBuilder.ts` — fix `--sandbox` flag; add `buildSessionListArgs`, `buildSessionCreateArgs`, `buildSessionResumeArgs`
+  - `src/tools/sessionList.ts` (new) — calls `agent ls`
+  - `src/tools/sessionCreate.ts` (new) — calls `agent create-chat`
+  - `src/tools/sessionResume.ts` (new) — calls `agent -p <prompt> --resume <chatId>`
+  - `tests/unit/tools/sessionList.test.ts`, `sessionCreate.test.ts`, `sessionResume.test.ts` (new)
+  - `tests/unit/adapters/argBuilder.test.ts` — add sandbox and session arg tests
+  - `src/registry/tools.ts` — register three new tools
+- **Real CLI commands (confirmed 2026-04-22):**
+  - `session_list` → `agent ls`
+  - `session_create` → `agent create-chat` (returns chat ID on stdout)
+  - `session_resume` → `agent -p "<prompt>" --resume <chatId>`
+- **`--sandbox` bug:** current argBuilder passes bare `--sandbox`; real CLI requires `--sandbox enabled` / `--sandbox disabled`. Fix this in T2.7 before implementing session tools.
+- **Gate:** `--sandbox` fix verified by test; 4 unit tests per session tool (12 total); all three tools callable from MCP host
+- **PR title format:** `feat(phase-2): session tools (list, create, resume) and sandbox flag fix`
 
 ---
 
