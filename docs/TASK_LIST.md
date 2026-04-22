@@ -264,15 +264,15 @@
 
 ### `feat/phase-4-security` — PARALLEL
 
-- **T4.1** — Write expanded security regression test suite per TESTING_STRATEGY.md section 4 (Phase 4 Gate)
-  - Acceptance: all 6 security regression tests pass
-- **T4.2** — Audit `src/security.ts` against regression test results; fix any gaps found
-  - Acceptance: `tests/unit/security.test.ts` 100% branch coverage
-- **T4.3** — Cold start benchmark: measure MCP `initialize` response time 3 times; record median
-  - Benchmark result: `[FILL IN: Xms median]`
-  - Acceptance: median < 500ms; if > 500ms, investigate and fix
-- **T4.4** — Audit all tool handlers for `LOG_PROMPTS` compliance; add tests verifying prompt text absent at INFO level
-  - Acceptance: test proves `LOG_PROMPTS=false` → no prompt text in log output
+- [x] **T4.1** — Write expanded security regression test suite per TESTING_STRATEGY.md section 4 (Phase 4 Gate)
+  - Acceptance: all 6 security regression tests pass _(2026-04-22 — added traversal/injection/shell-meta regression coverage in `runAgent.test.ts`)_
+- [x] **T4.2** — Audit `src/security.ts` against regression test results; fix any gaps found
+  - Acceptance: `tests/unit/security.test.ts` 100% branch coverage _(2026-04-22 — confirmed via coverage run on `security.test.ts`)_
+- [x] **T4.3** — Cold start benchmark: measure MCP `initialize` response time 3 times; record median
+  - Benchmark result: `71.86ms median` (runs: `100.07ms`, `71.86ms`, `69.45ms`)
+  - Acceptance: median < 500ms; if > 500ms, investigate and fix _(2026-04-22 — pass)_
+- [x] **T4.4** — Audit all tool handlers for `LOG_PROMPTS` compliance; add tests verifying prompt text absent at INFO level
+  - Acceptance: test proves `LOG_PROMPTS=false` → no prompt text in log output _(2026-04-22 — logger now strips prompt text outside debug+opt-in)_
 
 ### `feat/phase-4-streaming` — PARALLEL
 
