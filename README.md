@@ -33,9 +33,70 @@ Claude Desktop / Claude Code
 
 ## Prerequisites
 
-- **Node.js** `>= 20`
-- **Cursor** installed and signed in
-- Cursor's **`agent`** CLI — confirm with `/Users/you/.local/bin/agent status` or `agent status` if it's on your `PATH`
+### Node.js
+
+Install Node.js `>= 20` from [nodejs.org](https://nodejs.org) if you don't have it.
+
+---
+
+### Cursor CLI (`agent` binary)
+
+**1. Open a terminal**
+
+- macOS: Terminal or iTerm2
+- Linux: your distro's terminal
+- Windows: PowerShell (not Command Prompt)
+- WSL: your WSL terminal
+
+**2. Run the installer**
+
+macOS / Linux / WSL:
+```bash
+curl https://cursor.com/install -fsS | bash
+```
+
+Windows (PowerShell):
+```powershell
+irm 'https://cursor.com/install?win32=true' | iex
+```
+
+**3. Ensure `agent` is on your PATH**
+
+If `agent` isn't found after install, add `~/.local/bin` to your PATH:
+
+```bash
+# Bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+
+# Zsh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+
+# Fish
+fish_add_path $HOME/.local/bin
+```
+
+Windows sets PATH automatically — restart PowerShell if needed.
+
+**4. Sign in to Cursor, then verify**
+
+Open Cursor and sign in. Then back in your terminal run:
+```bash
+agent status
+```
+Should show your Cursor account email. If not, sign in to Cursor first.
+
+**5. Note your binary path — you'll need it during setup**
+
+| Platform | `AGENT_BINARY_PATH` |
+|----------|---------------------|
+| macOS / Linux / WSL | `~/.local/bin/agent` |
+| Windows | `%LocalAppData%\cursor-agent\agent.exe` |
+
+---
+
+### Claude Desktop
+
+Download and install from [claude.ai/download](https://claude.ai/download) and sign in. `npm run setup` handles writing the config automatically — just make sure Claude Desktop is installed and closed before running setup.
 
 ---
 
@@ -75,11 +136,31 @@ If you prefer to configure manually:
 npm install && npm run build
 ```
 
-### 2. Add to Claude Desktop config
+### 2. Find your Claude Desktop config file
 
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
-**Linux:** `~/.config/Claude/claude_desktop_config.json`  
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+Open your terminal and navigate to the config directory:
+
+| Platform | Path |
+|----------|------|
+| macOS | `~/Library/Application Support/Claude/` |
+| Linux | `~/.config/Claude/` |
+| Windows | `%APPDATA%\Claude\` |
+
+Open it directly from the terminal:
+
+```bash
+# macOS
+open ~/Library/Application\ Support/Claude/
+
+# Linux
+xdg-open ~/.config/Claude/
+```
+
+Windows — paste into File Explorer address bar: `%APPDATA%\Claude\`
+
+The file is called `claude_desktop_config.json`. Create it if it doesn't exist yet.
+
+### 3. Add the MCP server entry
 
 ```json
 {
@@ -99,9 +180,9 @@ npm install && npm run build
 }
 ```
 
-Replace `AGENT_BINARY_PATH` with the path to your `agent` binary and `WORKSPACE_ALLOWLIST` with the colon-separated absolute paths the agent is allowed to operate on.
+Replace `AGENT_BINARY_PATH` with your binary path from the table above, and `WORKSPACE_ALLOWLIST` with the colon-separated absolute paths the agent is allowed to operate on.
 
-### 3. Restart Claude Desktop
+### 4. Restart Claude Desktop
 
 ---
 
@@ -233,4 +314,4 @@ See `docs/BRANCH_STRATEGY.md` for the full rules.
 
 ## License
 
-MIT
+Apache 2.0 — see [LICENSE](./LICENSE) for the full text.
