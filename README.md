@@ -233,4 +233,4 @@ See `docs/BRANCH_STRATEGY.md` for the full rules.
 
 ## License
 
-MIT
+Apache 2.0 — see [LICENSE](./LICENSE) for the full text.
