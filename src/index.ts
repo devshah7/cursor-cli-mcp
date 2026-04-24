@@ -4,7 +4,7 @@ import { startServer } from './server.js';
 
 try {
   const config = loadConfig();
-  const executor = new AgentCliExecutor(config);
+  const executor = new AgentCliExecutor();
   startServer(executor, config);
 
   const shutdown = () => {
