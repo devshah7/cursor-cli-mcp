@@ -76,10 +76,8 @@ cursor-cli-mcp/
 │   │   ├── runAgent.ts             # schema + pure handler logic only
 │   │   ├── listModels.ts
 │   │   ├── agentStatus.ts
-│   │   └── sessions/               # grouped: created only if SESSION_GATE passes
-│   │       ├── sessionList.ts
-│   │       ├── sessionCreate.ts
-│   │       └── sessionResume.ts
+│   │   ├── sessionCreate.ts
+│   │   └── sessionResume.ts
 │   ├── resources/
 │   │   ├── cliPermissions.ts
 │   │   └── rulesDiscovery.ts
@@ -90,7 +88,8 @@ cursor-cli-mcp/
 │   │
 │   │   ── LAYER 2: PORTS ─────────────────────────────────────
 │   ├── ports/
-│   │   └── agentExecutor.ts        # IAgentExecutor interface — the only thing tools import
+│   │   ├── agentExecutor.ts        # IAgentExecutor interface — the only thing tools import
+│   │   └── executorTypes.ts        # ExecutorOptions, ExecutorResult, AgentCommand
 │   │
 │   │   ── LAYER 1: INFRASTRUCTURE ─────────────────────────────
 │   ├── adapters/
@@ -98,7 +97,7 @@ cursor-cli-mcp/
 │   │       ├── executor.ts         # AgentCliExecutor implements IAgentExecutor
 │   │       ├── argBuilder.ts       # ALL CLI flag knowledge lives here — one file
 │   │       ├── ringBuffer.ts       # Output capture primitive
-│   │       └── types.ts            # ExecutorOptions, ExecutorResult
+│   │       └── types.ts            # Re-exports executor types from ports/
 │   │
 │   │   ── CROSS-CUTTING ─────────────────────────────────────
 │   ├── config.ts                   # Env var loading + validation
@@ -118,7 +117,9 @@ cursor-cli-mcp/
 │   │   └── tools/
 │   │       ├── runAgent.test.ts
 │   │       ├── listModels.test.ts
-│   │       └── agentStatus.test.ts
+│   │       ├── agentStatus.test.ts
+│   │       ├── sessionCreate.test.ts
+│   │       └── sessionResume.test.ts
 │   ├── integration/
 │   │   └── agentCli.test.ts
 │   └── fixtures/
@@ -284,7 +285,8 @@ The **only** file that knows Cursor CLI flag names. Maps structured `ToolInput` 
 ```typescript
 export function buildRunAgentArgs(input: RunAgentInput): string[]
 export function buildListModelsArgs(): string[]
-export function buildSessionArgs(input: SessionInput): string[]
+export function buildSessionCreateArgs(workspace?: string): string[]
+export function buildSessionResumeArgs(input: SessionResumeCliInput): string[]
 ```
 
 If Cursor renames `--mode` → `--run-mode`, change one function in one file. Zero tool handlers change.
@@ -298,6 +300,8 @@ Fixed-size byte ring buffer. Per-buffer, not shared between stdout/stderr.
 - `truncated: boolean` — true if any bytes were dropped.
 
 **`types.ts` — Infrastructure Types**
+
+Canonical definitions live in `src/ports/executorTypes.ts` (dependency boundary). `adapters/agentCli/types.ts` re-exports them.
 
 ```typescript
 interface ExecutorOptions {
@@ -328,14 +332,15 @@ Loads and validates all configuration from environment variables. Injected into 
 |---------|---------|-----------|
 | `AGENT_BINARY_PATH` | Platform default | `fs.accessSync` X_OK; warn (not fatal) if missing |
 | `AGENT_TIMEOUT_MS` | `120000` | Integer > 0; throws `ConfigError` if invalid |
-| `MAX_OUTPUT_BYTES` | `524288` | Integer > 0; throws `ConfigError` if 0 or invalid |
+| `SESSION_CREATE_TIMEOUT_MS` | `10000` | Integer > 0; throws `ConfigError` if invalid |
+| `MAX_OUTPUT_BYTES` | `524288` | Integer ≥ `1024`; throws `ConfigError` if below minimum or invalid |
 | `WORKSPACE_ALLOWLIST` | `""` (deny all) | Split on `:`; empty → deny all; no allow-all mode |
 | `LOG_LEVEL` | `info` | One of: `debug`, `info`, `warn`, `error` |
 | `LOG_PROMPTS` | `false` | Prompt text logged only if `true`, only at `debug` |
 
 **Platform defaults for `AGENT_BINARY_PATH`:**
-- macOS: `/usr/local/bin/agent` → fallback: `/Applications/Cursor.app/Contents/Resources/app/bin/agent`
-- Linux: `/usr/local/bin/agent`
+- macOS: `~/.local/bin/cursor-agent` → fallback: `/opt/homebrew/bin/cursor-agent`
+- Linux: `~/.local/bin/cursor-agent` → fallback: `/usr/local/bin/cursor-agent`
 
 **Shutdown contract:** SIGTERM/SIGINT → complete in-flight requests (already past validation) → SIGTERM all spawned subprocesses → wait up to 10s → `process.exit(0)`.
 
