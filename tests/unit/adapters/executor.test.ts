@@ -9,10 +9,11 @@ describe('AgentCliExecutor', () => {
     const chunks: string[] = [];
     const r = await ex.run({
       binary: node,
-      args: [
-        '-e',
-        'process.stdout.write("P1"); setTimeout(() => { process.stdout.write("P2"); process.exit(0); }, 40);',
-      ],
+      command: {
+        kind: 'host_node_eval',
+        script:
+          'process.stdout.write("P1"); setTimeout(() => { process.stdout.write("P2"); process.exit(0); }, 40);',
+      },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
       onStdoutChunk: (c) => chunks.push(c),
@@ -26,7 +27,7 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stdout.write("OK")'],
+      command: { kind: 'host_node_eval', script: 'process.stdout.write("OK")' },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -39,7 +40,7 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stderr.write("ERR"); process.exit(3)'],
+      command: { kind: 'host_node_eval', script: 'process.stderr.write("ERR"); process.exit(3)' },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -51,7 +52,7 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'setInterval(()=>{},1000)'],
+      command: { kind: 'host_node_eval', script: 'setInterval(()=>{},1000)' },
       timeoutMs: 100,
       maxOutputBytes: 4096,
     });
@@ -63,7 +64,7 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stdout.write("x".repeat(5000))'],
+      command: { kind: 'host_node_eval', script: 'process.stdout.write("x".repeat(5000))' },
       timeoutMs: 5000,
       maxOutputBytes: 100,
     });
@@ -75,7 +76,7 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.exit(0)'],
+      command: { kind: 'host_node_eval', script: 'process.exit(0)' },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -86,7 +87,7 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: '/path/does/not/exist/agent-bin-xyz',
-      args: [],
+      command: { kind: 'list_models' },
       timeoutMs: 1000,
       maxOutputBytes: 1024,
     });
@@ -97,7 +98,10 @@ describe('AgentCliExecutor', () => {
     const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stdout.write("A"); process.stderr.write("B")'],
+      command: {
+        kind: 'host_node_eval',
+        script: 'process.stdout.write("A"); process.stderr.write("B")',
+      },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });

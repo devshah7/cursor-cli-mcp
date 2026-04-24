@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { buildSessionCreateArgs } from '../adapters/agentCli/argBuilder.js';
 import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
@@ -78,7 +77,7 @@ export function createSessionCreateDescriptor(
     ) => {
       const result = await executor.run({
         binary: toolCtx.agentBinaryPath,
-        args: buildSessionCreateArgs(input.workspace),
+        command: { kind: 'session_create', workspace: input.workspace },
         timeoutMs: toolCtx.sessionCreateTimeoutMs,
         maxOutputBytes: toolCtx.maxOutputBytes,
       });

@@ -456,13 +456,13 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** All 5 tool handlers (`runAgent`, `listModels`, `agentStatus`, `sessionCreate`, `sessionResume`) import directly from `src/adapters/agentCli/argBuilder.ts`. This violates the explicit architecture rule: `tools/ → ports/ only, NEVER adapters/`. The ESLint config has no rule catching this so it silently slips through.
 
-- [ ] **T6.1** — Eliminate tools → adapters import chain by moving arg-building responsibility into the executor layer:
+- [x] **T6.1** — Eliminate tools → adapters import chain by moving arg-building responsibility into the executor layer:
   - Define a discriminated union `AgentCommand` in `src/ports/executorTypes.ts` covering all CLI operations: `RunAgent`, `ListModels`, `AgentStatus`, `SessionCreate`, `SessionResume`. Each variant carries only the semantic inputs (prompt, model, workspace, etc.) — no CLI flag strings.
   - Update `IAgentExecutor.run()` in `src/ports/agentExecutor.ts` to accept `AgentCommand` instead of raw `args: string[]`.
   - Move all `buildXxxArgs()` calls inside `AgentCliExecutor.run()` in `src/adapters/agentCli/executor.ts` — the adapter resolves the command variant and calls argBuilder internally. argBuilder stays unchanged.
   - Update all tool handlers to construct the appropriate `AgentCommand` variant and pass it to `executor.run()`. Remove all `import ... from adapters/` lines from `src/tools/`.
   - Update all affected unit tests: tool tests construct `AgentCommand` objects; executor tests receive `AgentCommand` objects.
-  - Acceptance: zero imports from `adapters/` in any `src/tools/*.ts` file; `npm run typecheck && npm run lint && npm run test:unit` all exit 0.
+  - Acceptance: zero imports from `adapters/` in any `src/tools/*.ts` file; `npm run typecheck && npm run lint && npm run test:unit` all exit 0. _(2026-04-24)_
 
 ---
 
@@ -542,11 +542,11 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** The ESLint config has no rule preventing `tools/` from importing `adapters/`. The architecture violation (T6.1) existed undetected because linting has no enforcement for it.
 
-- [ ] **T6.10** — Add an ESLint `no-restricted-imports` rule to `.eslintrc.json` that bans imports matching `**/adapters/**` from files matching `src/tools/**`:
+- [x] **T6.10** — Add an ESLint `no-restricted-imports` rule to `.eslintrc.json` that bans imports matching `**/adapters/**` from files matching `src/tools/**`:
   - Use the `overrides` array to scope the rule to `src/tools/*.ts` only.
   - Add a clear `message` on the rule: `"tools/ must not import from adapters/ — use ports/ only (see ARCHITECTURE.md)"`.
   - Verify `npm run lint` exits non-zero if a tool file imports from adapters (test manually or add a lint-only fixture).
-  - Acceptance: rule present in config; `npm run lint` catches any future tools→adapters imports; existing tools pass lint after T6.1 removes the violations.
+  - Acceptance: rule present in config; `npm run lint` catches any future tools→adapters imports; existing tools pass lint after T6.1 removes the violations. _(2026-04-24)_
 
 ---
 
