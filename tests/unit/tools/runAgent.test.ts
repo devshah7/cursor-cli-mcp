@@ -217,6 +217,11 @@ describe('run_agent tool', () => {
     expect(chunks).toEqual(['a', 'b']);
   });
 
+  it('descriptor has supportsStreaming set to true', () => {
+    const descriptor = createRunAgentDescriptor(ctx);
+    expect(descriptor.supportsStreaming).toBe(true);
+  });
+
   it('shell metacharacters in prompt are passed as raw spawn arg', async () => {
     let capturedPromptArg = '';
     const executor = new MockExecutor(async (opts) => {

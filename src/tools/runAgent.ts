@@ -39,6 +39,7 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
       'Run Cursor agent CLI in non-interactive (print) mode with the given prompt and options.',
     schema: runAgentSchema as z.ZodType<RunAgentParsed>,
     pathArgs: pathArgsFromRunAgent,
+    supportsStreaming: true,
     handler: async (input: RunAgentParsed, executor: IAgentExecutor, toolCtx: PipelineContext) => {
       const args = buildRunAgentArgs({
         prompt: input.prompt,
