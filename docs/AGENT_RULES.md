@@ -241,7 +241,7 @@ The correct resolution for conflicts in `src/server.ts` (tool registrations) is 
 
 Any tool handler that reads `toolCtx.sendNotification` (to stream stdout chunks to the client) **must** set `supportsStreaming: true` on its tool descriptor in `src/registry/tools.ts`.
 
-If the flag is missing, `server.ts` never injects the callback and the handler’s streaming branch is silently dead — the exact failure mode fixed for `session_resume` in Phase 6.
+If the flag is missing, `server.ts` never injects the callback and the handler's streaming branch is silently dead — the exact failure mode fixed for `session_resume` in Phase 6.
 
 ---
 
