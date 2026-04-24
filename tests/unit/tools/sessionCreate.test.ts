@@ -62,9 +62,9 @@ describe('session_create tool', () => {
   });
 
   it('forwards workspace into create-chat argv when path is allowlisted', async () => {
-    let seenArgs: string[] = [];
+    let seenCommand: import('../../../src/ports/executorTypes.js').AgentCommand | undefined;
     const executor = new MockExecutor(async (opts) => {
-      seenArgs = opts.args;
+      seenCommand = opts.command;
       return {
         stdout: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n',
         stderrExcerpt: '',
@@ -77,9 +77,10 @@ describe('session_create tool', () => {
     const wrapped = wrapTool(createSessionCreateDescriptor(ctx), executor, ctx);
     const out = await wrapped({ workspace: '/allowed/project' });
     expect(out.isError).not.toBe(true);
-    expect(seenArgs).toContain('create-chat');
-    expect(seenArgs).toContain('--workspace');
-    expect(seenArgs).toContain('/allowed/project');
+    expect(seenCommand?.kind).toBe('session_create');
+    expect((seenCommand as { kind: 'session_create'; workspace?: string }).workspace).toBe(
+      '/allowed/project',
+    );
   });
 
   it('SECURITY when workspace outside allowlist', async () => {
