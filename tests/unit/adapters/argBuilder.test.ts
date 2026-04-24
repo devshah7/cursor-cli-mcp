@@ -90,5 +90,4 @@ describe('argBuilder', () => {
       }),
     ).toEqual(['-p', 'continue', '--resume', 'abc-123', '--model', 'm', '--output-format', 'json']);
   });
-
 });
