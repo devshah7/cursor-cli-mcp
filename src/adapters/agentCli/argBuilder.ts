@@ -53,8 +53,12 @@ export function buildAgentStatusArgs(): string[] {
   return ['status'];
 }
 
-export function buildSessionCreateArgs(): string[] {
-  return ['create-chat'];
+export function buildSessionCreateArgs(workspace?: string): string[] {
+  const args: string[] = ['create-chat'];
+  if (workspace !== undefined) {
+    args.push('--workspace', workspace);
+  }
+  return args;
 }
 
 export interface SessionResumeCliInput {

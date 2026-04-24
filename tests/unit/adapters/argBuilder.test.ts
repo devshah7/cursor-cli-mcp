@@ -72,6 +72,14 @@ describe('argBuilder', () => {
     expect(buildSessionCreateArgs()).toEqual(['create-chat']);
   });
 
+  it('buildSessionCreateArgs forwards optional workspace', () => {
+    expect(buildSessionCreateArgs('/tmp/test')).toEqual([
+      'create-chat',
+      '--workspace',
+      '/tmp/test',
+    ]);
+  });
+
   it('buildSessionResumeArgs maps prompt, resume id, model, output_format', () => {
     expect(
       buildSessionResumeArgs({
@@ -82,4 +90,5 @@ describe('argBuilder', () => {
       }),
     ).toEqual(['-p', 'continue', '--resume', 'abc-123', '--model', 'm', '--output-format', 'json']);
   });
+
 });

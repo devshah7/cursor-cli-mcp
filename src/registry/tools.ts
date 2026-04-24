@@ -21,6 +21,7 @@ export function pipelineContextFromConfig(config: Config): PipelineContext {
     workspaceAllowlist: config.workspaceAllowlist,
     agentBinaryPath: config.agentBinaryPath,
     agentTimeoutMs: config.agentTimeoutMs,
+    sessionCreateTimeoutMs: config.sessionCreateTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
   };
 }

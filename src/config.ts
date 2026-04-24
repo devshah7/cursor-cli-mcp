@@ -8,6 +8,7 @@ export class ConfigError extends Error {
 export interface Config {
   agentBinaryPath: string;
   agentTimeoutMs: number;
+  sessionCreateTimeoutMs: number;
   maxOutputBytes: number;
   workspaceAllowlist: string[];
   logLevel: 'debug' | 'info' | 'warn' | 'error';
@@ -76,6 +77,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   warnMissingBinary(agentBinaryPath);
 
   const agentTimeoutMs = parsePositiveInt(env.AGENT_TIMEOUT_MS, 120_000, 'AGENT_TIMEOUT_MS');
+  const sessionCreateTimeoutMs = parsePositiveInt(
+    env.SESSION_CREATE_TIMEOUT_MS,
+    10_000,
+    'SESSION_CREATE_TIMEOUT_MS',
+  );
   const maxOutputBytes = parsePositiveInt(env.MAX_OUTPUT_BYTES, 524_288, 'MAX_OUTPUT_BYTES');
 
   const allowRaw = env.WORKSPACE_ALLOWLIST ?? '';
@@ -92,6 +98,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return {
     agentBinaryPath,
     agentTimeoutMs,
+    sessionCreateTimeoutMs,
     maxOutputBytes,
     workspaceAllowlist,
     logLevel: parseLogLevel(env.LOG_LEVEL),

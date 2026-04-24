@@ -16,6 +16,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
   return {
     agentBinaryPath: '/usr/local/bin/agent',
     agentTimeoutMs: 5000,
+    sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
     workspaceAllowlist: ['/allowed'],
     logLevel: 'info',

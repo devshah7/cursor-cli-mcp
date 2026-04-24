@@ -19,6 +19,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
   return {
     agentBinaryPath: '/usr/local/bin/agent',
     agentTimeoutMs: 5000,
+    sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
     workspaceAllowlist: ['/allowed'],
     logLevel: 'info',
@@ -92,5 +93,28 @@ describe('session_create tool', () => {
     const out = await wrapped({});
     expect(out.isError).toBe(true);
     expect(JSON.parse(getText(out)).errorClass).toBe('AGENT_ERROR');
+  });
+
+  it('timed out session_create returns TIMEOUT', async () => {
+    const shortCtx: PipelineContext = pipelineContextFromConfig(
+      baseConfig({ sessionCreateTimeoutMs: 25 }),
+    );
+    let seenTimeout = 0;
+    const executor = new MockExecutor(async (opts) => {
+      seenTimeout = opts.timeoutMs;
+      return {
+        stdout: '',
+        stderrExcerpt: '',
+        exitCode: 124,
+        timedOut: true,
+        outputTruncated: false,
+        durationMs: 25,
+      };
+    });
+    const wrapped = wrapTool(createSessionCreateDescriptor(shortCtx), executor, shortCtx);
+    const out = await wrapped({});
+    expect(seenTimeout).toBe(25);
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('TIMEOUT');
   });
 });

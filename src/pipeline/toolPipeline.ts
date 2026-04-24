@@ -11,6 +11,7 @@ export interface PipelineContext {
   workspaceAllowlist: string[];
   agentBinaryPath: string;
   agentTimeoutMs: number;
+  sessionCreateTimeoutMs: number;
   maxOutputBytes: number;
   /** Phase 4 streaming — forward `run_agent` stdout chunks to MCP client; undefined = aggregated-only. */
   sendNotification?: (chunk: string) => void;
