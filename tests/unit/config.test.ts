@@ -17,6 +17,7 @@ describe('loadConfig', () => {
     const c = loadConfig(process.env);
     expect(c.agentTimeoutMs).toBe(120_000);
     expect(c.maxOutputBytes).toBe(524_288);
+    expect(c.agentBinaryPath).toContain('cursor-agent');
     expect(c.workspaceAllowlist).toEqual([]);
     expect(c.logLevel).toBe('info');
     expect(c.logPrompts).toBe(false);
