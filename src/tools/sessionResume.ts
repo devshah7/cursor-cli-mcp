@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { buildSessionResumeArgs } from '../adapters/agentCli/argBuilder.js';
 import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
@@ -39,12 +38,6 @@ export function createSessionResumeDescriptor(
       executor: IAgentExecutor,
       toolCtx: PipelineContext,
     ) => {
-      const args = buildSessionResumeArgs({
-        prompt: input.prompt,
-        sessionId: input.session_id,
-        model: input.model,
-        output_format: input.output_format,
-      });
       const onStdoutChunk =
         toolCtx.sendNotification !== undefined
           ? (chunk: string): void => {
@@ -53,7 +46,13 @@ export function createSessionResumeDescriptor(
           : undefined;
       return await executor.run({
         binary: toolCtx.agentBinaryPath,
-        args,
+        command: {
+          kind: 'session_resume',
+          prompt: input.prompt,
+          sessionId: input.session_id,
+          model: input.model,
+          outputFormat: input.output_format,
+        },
         timeoutMs: toolCtx.agentTimeoutMs,
         maxOutputBytes: toolCtx.maxOutputBytes,
         onStdoutChunk,

@@ -256,8 +256,10 @@ describe('run_agent tool', () => {
   it('shell metacharacters in prompt are passed as raw spawn arg', async () => {
     let capturedPromptArg = '';
     const executor = new MockExecutor(async (opts) => {
-      const pIndex = opts.args.indexOf('-p');
-      capturedPromptArg = pIndex >= 0 ? (opts.args[pIndex + 1] ?? '') : '';
+      capturedPromptArg =
+        opts.command.kind === 'run_agent' && opts.command.prompt !== undefined
+          ? opts.command.prompt
+          : '';
       return {
         stdout: 'ok',
         stderrExcerpt: '',
