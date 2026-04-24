@@ -36,7 +36,9 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
   return {
     name: 'run_agent',
     description:
-      'Run Cursor agent CLI in non-interactive (print) mode with the given prompt and options.',
+      'Run Cursor agent CLI in non-interactive (print) mode with the given prompt and options. ' +
+      'When WORKSPACE_ALLOWLIST is configured on the server, supply a `workspace` path so the ' +
+      'allowlist check applies; omitting it means the agent runs without workspace path validation.',
     schema: runAgentSchema as z.ZodType<RunAgentParsed>,
     pathArgs: pathArgsFromRunAgent,
     handler: async (input: RunAgentParsed, executor: IAgentExecutor, toolCtx: PipelineContext) => {
