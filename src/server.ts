@@ -5,6 +5,7 @@ import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sd
 import type { Config } from './config.js';
 import type { IAgentExecutor } from './ports/agentExecutor.js';
 import { wrapTool, type PipelineContext } from './pipeline/toolPipeline.js';
+import { createLogger } from './logger.js';
 import { registerPromptHandlers } from './registry/prompts.js';
 import { ALL_RESOURCES } from './registry/resources.js';
 import { buildToolDescriptors } from './registry/tools.js';
@@ -17,6 +18,8 @@ export function startServer(executor: IAgentExecutor, config: Config): void {
 }
 
 async function connectServer(executor: IAgentExecutor, config: Config): Promise<void> {
+  const logger = createLogger(config);
+
   const mcp = new McpServer(
     {
       name: 'cursor-cli-mcp',
@@ -35,6 +38,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     agentBinaryPath: config.agentBinaryPath,
     agentTimeoutMs: config.agentTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
+    logger,
   };
 
   for (const tool of buildToolDescriptors(config)) {

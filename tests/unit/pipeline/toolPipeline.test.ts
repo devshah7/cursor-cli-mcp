@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { wrapTool } from '../../../src/pipeline/toolPipeline.js';
 import type { PipelineContext } from '../../../src/pipeline/toolPipeline.js';
 import type { ToolDescriptor } from '../../../src/registry/tools.js';
 import type { ExecutorResult } from '../../../src/ports/executorTypes.js';
+import type { Logger } from '../../../src/logger.js';
 import { createMockExecutor as baseMock } from '../../fixtures/mockExecutor.js';
 
 function getText(result: CallToolResult): string {
@@ -131,5 +132,70 @@ describe('toolPipeline.wrapTool', () => {
     expect(out.isError).toBe(true);
     const body = JSON.parse(getText(out));
     expect(body.errorClass).toBe('BINARY_NOT_FOUND');
+  });
+
+  it('emits workspace-bypass warning when allowlist is set but pathArgs is empty', async () => {
+    const warnSpy = vi.fn();
+    const mockLogger: Logger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: warnSpy,
+      error: vi.fn(),
+    };
+    const descriptor: ToolDescriptor<{ msg: string }> = {
+      name: 't_bypass',
+      description: 'x',
+      schema,
+      pathArgs: () => [],
+      handler: async ({ msg }, _executor, _toolCtx) => ({ echo: msg }),
+    };
+    const ctx: PipelineContext = { ...pc(['/allowed']), logger: mockLogger };
+    const wrapped = wrapTool(descriptor, baseMock(), ctx);
+    const out = await wrapped({ msg: 'hi' });
+    expect(out.isError).not.toBe(true);
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(warnSpy.mock.calls[0][0]).toMatch(/workspace-bypass/);
+  });
+
+  it('does not emit workspace-bypass warning when pathArgs are present', async () => {
+    const warnSpy = vi.fn();
+    const mockLogger: Logger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: warnSpy,
+      error: vi.fn(),
+    };
+    const descriptor: ToolDescriptor<{ msg: string }> = {
+      name: 't_no_bypass',
+      description: 'x',
+      schema,
+      pathArgs: () => ['/allowed/project'],
+      handler: async ({ msg }, _executor, _toolCtx) => ({ echo: msg }),
+    };
+    const ctx: PipelineContext = { ...pc(['/allowed']), logger: mockLogger };
+    const wrapped = wrapTool(descriptor, baseMock(), ctx);
+    await wrapped({ msg: 'hi' });
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not emit workspace-bypass warning when allowlist is empty', async () => {
+    const warnSpy = vi.fn();
+    const mockLogger: Logger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: warnSpy,
+      error: vi.fn(),
+    };
+    const descriptor: ToolDescriptor<{ msg: string }> = {
+      name: 't_no_allowlist',
+      description: 'x',
+      schema,
+      pathArgs: () => [],
+      handler: async ({ msg }, _executor, _toolCtx) => ({ echo: msg }),
+    };
+    const ctx: PipelineContext = { ...pc([]), logger: mockLogger };
+    const wrapped = wrapTool(descriptor, baseMock(), ctx);
+    await wrapped({ msg: 'hi' });
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
