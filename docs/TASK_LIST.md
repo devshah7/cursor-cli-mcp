@@ -550,14 +550,57 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 ---
 
+### `fix/streaming-guard` — PARALLEL 🟡 MEDIUM
+
+**Files in scope:** `tests/unit/registry/tools.test.ts`, `docs/AGENT_RULES.md`
+
+**Source:** Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) comment 2026-04-24 — item #8.
+
+**Finding:** The `supportsStreaming` flag is partially enforced. `run_agent` sets it and the registry test verifies it. However:
+1. `session_resume` (fixed in T6.2) also has the flag set but the registry test does not assert it — a regression would go unnoticed.
+2. There is no automated guard preventing a future tool from calling `toolCtx.sendNotification` in its handler without setting `supportsStreaming: true` on its descriptor. If that happens, the streaming code path is silently dead (exactly the bug T6.2 fixed).
+
+- [ ] **T6.11** — Extend `tests/unit/registry/tools.test.ts` to assert `supportsStreaming` for all streaming-capable tools:
+  - Add a dedicated test: assert `session_resume` descriptor has `supportsStreaming: true`.
+  - Add a test asserting that ALL descriptors with `supportsStreaming: true` are explicitly listed — effectively a registry snapshot. If a new tool sets the flag without being added to this list (or removes it without updating the list), the test fails.
+  - Add a comment above the list: `// Update this list whenever a tool gains or loses supportsStreaming`.
+  - Acceptance: registry test covers both `run_agent` and `session_resume`; snapshot test catches future flag drift; `npm run test:unit` passes.
+
+- [ ] **T6.12** — Document the `supportsStreaming` contract in `docs/AGENT_RULES.md`:
+  - Add a rule (or extend Rule 13 module boundaries): "Any tool handler that reads `toolCtx.sendNotification` MUST set `supportsStreaming: true` on its descriptor. If the flag is missing, `server.ts` will never inject the callback and the handler's streaming code path will be silently dead."
+  - Add `supportsStreaming flag missing on a streaming handler` to the Forbidden Patterns quick-reference table.
+  - Acceptance: rule documented; future agents have explicit written guidance.
+
+---
+
+### `fix/max-output-bytes-verify` — PARALLEL 🟢 LOW
+
+**Files in scope:** `docs/TASK_LIST.md`, `tests/unit/config.test.ts`, issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21)
+
+**Source:** Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) comment 2026-04-24 — item #9.
+
+**Finding:** The issue comment flagged `maxOutputBytes` minimum validation as still open. However, the validation **is already present** in the current `dev` codebase (`config.ts:92-93`: `if (maxOutputBytes < 1024) throw new ConfigError(...)`), and the config test already covers it. The issue comment was written before `chore/config-validation` was merged to `dev`.
+
+- [ ] **T6.13** — Confirm and close issue #21 item #9:
+  - Verify `config.ts` on `dev` has `if (maxOutputBytes < 1024) throw new ConfigError(...)` (lines 92–93).
+  - Verify `tests/unit/config.test.ts` has a test asserting `MAX_OUTPUT_BYTES=512` → `ConfigError` and `MAX_OUTPUT_BYTES=1024` → valid.
+  - Post a reply on issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) confirming item #9 is resolved: the validation landed in `chore/config-validation` (PR merged to `dev`); the comment predates that merge.
+  - Mark Phase 5 task T5.9 as `[x]` complete in this file with date.
+  - Acceptance: issue #21 reply posted; T5.9 marked complete; no code change needed.
+
+---
+
 **Phase 6 Gate (all branches merged to `dev`, pre-v1.2 release):**
 
 - [ ] Zero imports from `adapters/` in any `src/tools/*.ts` file (`npm run lint` enforces)
 - [ ] `session_resume` streaming wired and tested
 - [ ] All documentation items corrected (README, API_SPEC, ARCHITECTURE, CLAUDE.md)
+- [ ] `supportsStreaming` registry snapshot test covers all streaming tools
+- [ ] `supportsStreaming` contract documented in AGENT_RULES.md
+- [ ] Issue #21 items #8 and #9 confirmed resolved; issue closed
 - [ ] `npm run lint && npm run typecheck && npm run build` exit 0
-- [ ] `npm run test:unit` passes with ≥ 100 tests _(2026-04-24 — 102 tests on `chore/test-coverage` branch; gate pending full Phase 6 merge)_
-- [ ] CI green
+- [ ] `npm run test:unit` passes with ≥ 103 tests
+- [ ] CI green on `dev`
 - [ ] v1.2 release PR `dev → main` created
 
 ---
