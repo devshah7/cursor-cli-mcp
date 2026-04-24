@@ -560,16 +560,16 @@ All Phase 6 branches are **PARALLEL** unless noted.
 1. `session_resume` (fixed in T6.2) also has the flag set but the registry test does not assert it — a regression would go unnoticed.
 2. There is no automated guard preventing a future tool from calling `toolCtx.sendNotification` in its handler without setting `supportsStreaming: true` on its descriptor. If that happens, the streaming code path is silently dead (exactly the bug T6.2 fixed).
 
-- [ ] **T6.11** — Extend `tests/unit/registry/tools.test.ts` to assert `supportsStreaming` for all streaming-capable tools:
+- [x] **T6.11** — Extend `tests/unit/registry/tools.test.ts` to assert `supportsStreaming` for all streaming-capable tools:
   - Add a dedicated test: assert `session_resume` descriptor has `supportsStreaming: true`.
   - Add a test asserting that ALL descriptors with `supportsStreaming: true` are explicitly listed — effectively a registry snapshot. If a new tool sets the flag without being added to this list (or removes it without updating the list), the test fails.
   - Add a comment above the list: `// Update this list whenever a tool gains or loses supportsStreaming`.
-  - Acceptance: registry test covers both `run_agent` and `session_resume`; snapshot test catches future flag drift; `npm run test:unit` passes.
+  - Acceptance: registry test covers both `run_agent` and `session_resume`; snapshot test catches future flag drift; `npm run test:unit` passes. _(2026-04-24)_
 
-- [ ] **T6.12** — Document the `supportsStreaming` contract in `docs/AGENT_RULES.md`:
+- [x] **T6.12** — Document the `supportsStreaming` contract in `docs/AGENT_RULES.md`:
   - Add a rule (or extend Rule 13 module boundaries): "Any tool handler that reads `toolCtx.sendNotification` MUST set `supportsStreaming: true` on its descriptor. If the flag is missing, `server.ts` will never inject the callback and the handler's streaming code path will be silently dead."
   - Add `supportsStreaming flag missing on a streaming handler` to the Forbidden Patterns quick-reference table.
-  - Acceptance: rule documented; future agents have explicit written guidance.
+  - Acceptance: rule documented; future agents have explicit written guidance. _(2026-04-24)_
 
 ---
 
@@ -595,8 +595,8 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [ ] Zero imports from `adapters/` in any `src/tools/*.ts` file (`npm run lint` enforces)
 - [ ] `session_resume` streaming wired and tested
 - [ ] All documentation items corrected (README, API_SPEC, ARCHITECTURE, CLAUDE.md)
-- [ ] `supportsStreaming` registry snapshot test covers all streaming tools
-- [ ] `supportsStreaming` contract documented in AGENT_RULES.md
+- [x] `supportsStreaming` registry snapshot test covers all streaming tools _(2026-04-24)_
+- [x] `supportsStreaming` contract documented in AGENT_RULES.md _(2026-04-24)_
 - [ ] Issue #21 items #8 and #9 confirmed resolved; issue closed
 - [ ] `npm run lint && npm run typecheck && npm run build` exit 0
 - [ ] `npm run test:unit` passes with ≥ 103 tests
