@@ -1,17 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { AgentCliExecutor } from '../../../src/adapters/agentCli/executor.js';
 
-const tinyConfig = {
-  agentBinaryPath: '/nonexistent-for-field-only',
-  agentTimeoutMs: 60_000,
-  maxOutputBytes: 1024,
-} as const;
-
 describe('AgentCliExecutor', () => {
   const node = process.execPath;
 
   it('invokes onStdoutChunk as stdout arrives', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const chunks: string[] = [];
     const r = await ex.run({
       binary: node,
@@ -29,7 +23,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('captures stdout on exit 0', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
       args: ['-e', 'process.stdout.write("OK")'],
@@ -42,7 +36,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('captures stderr excerpt on non-zero exit', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
       args: ['-e', 'process.stderr.write("ERR"); process.exit(3)'],
@@ -54,7 +48,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('sets timedOut when watchdog fires', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
       args: ['-e', 'setInterval(()=>{},1000)'],
@@ -66,7 +60,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('truncates stdout when exceeding maxOutputBytes', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
       args: ['-e', 'process.stdout.write("x".repeat(5000))'],
@@ -78,7 +72,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('returns durationMs >= 0', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
       args: ['-e', 'process.exit(0)'],
@@ -89,7 +83,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('maps missing binary to exit 127 via child error path', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: '/path/does/not/exist/agent-bin-xyz',
       args: [],
@@ -100,7 +94,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('keeps stdout and stderr independent', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
       args: ['-e', 'process.stdout.write("A"); process.stderr.write("B")'],
@@ -112,7 +106,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('shutdown completes without throwing when idle', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     await expect(ex.shutdown()).resolves.toBeUndefined();
   });
 });

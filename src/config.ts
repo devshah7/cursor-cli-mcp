@@ -27,17 +27,23 @@ function parsePositiveInt(raw: string | undefined, fallback: number, label: stri
 }
 
 function defaultAgentBinaryPath(): string {
-  const primary = '/usr/local/bin/agent';
+  const homeLocal = `${os.homedir()}/.local/bin/cursor-agent`;
   if (os.platform() === 'darwin') {
-    const fallback = '/Applications/Cursor.app/Contents/Resources/app/bin/agent';
+    const fallback = '/opt/homebrew/bin/cursor-agent';
     try {
-      fs.accessSync(primary, fs.constants.X_OK);
-      return primary;
+      fs.accessSync(homeLocal, fs.constants.X_OK);
+      return homeLocal;
     } catch {
       return fallback;
     }
   }
-  return primary;
+  const fallback = '/usr/local/bin/cursor-agent';
+  try {
+    fs.accessSync(homeLocal, fs.constants.X_OK);
+    return homeLocal;
+  } catch {
+    return fallback;
+  }
 }
 
 function parseLogLevel(raw: string | undefined): Config['logLevel'] {
@@ -83,6 +89,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     'SESSION_CREATE_TIMEOUT_MS',
   );
   const maxOutputBytes = parsePositiveInt(env.MAX_OUTPUT_BYTES, 524_288, 'MAX_OUTPUT_BYTES');
+  if (maxOutputBytes < 1024) {
+    throw new ConfigError('MAX_OUTPUT_BYTES must be >= 1024');
+  }
 
   const allowRaw = env.WORKSPACE_ALLOWLIST ?? '';
   const workspaceAllowlist =

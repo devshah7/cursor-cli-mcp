@@ -114,4 +114,42 @@ describe('session_resume tool', () => {
     );
     expect(chunks).toEqual(['chunk']);
   });
+
+  it('rejects model path traversal payload (VALIDATION)', async () => {
+    let runs = 0;
+    const executor = new MockExecutor(async () => {
+      runs++;
+      throw new Error('should not run');
+    });
+    const wrapped = wrapTool(createSessionResumeDescriptor(ctx), executor, ctx);
+    const out = await wrapped({
+      session_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      prompt: 'x',
+      model: '../../etc/passwd',
+    });
+    expect(runs).toBe(0);
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('VALIDATION');
+  });
+
+  it('accepts canonical model ids', async () => {
+    const accepted = ['claude-4-sonnet', 'openai/gpt-4o', 'gpt-5.4-high'];
+    for (const model of accepted) {
+      const executor = new MockExecutor(async () => ({
+        stdout: 'done',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      }));
+      const wrapped = wrapTool(createSessionResumeDescriptor(ctx), executor, ctx);
+      const out = await wrapped({
+        session_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        prompt: 'next',
+        model,
+      });
+      expect(out.isError).not.toBe(true);
+    }
+  });
 });

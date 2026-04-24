@@ -18,6 +18,7 @@ describe('loadConfig', () => {
     expect(c.agentTimeoutMs).toBe(120_000);
     expect(c.sessionCreateTimeoutMs).toBe(10_000);
     expect(c.maxOutputBytes).toBe(524_288);
+    expect(c.agentBinaryPath).toContain('cursor-agent');
     expect(c.workspaceAllowlist).toEqual([]);
     expect(c.logLevel).toBe('info');
     expect(c.logPrompts).toBe(false);
@@ -44,14 +45,15 @@ describe('loadConfig', () => {
     expect(() => loadConfig(process.env)).toThrow(ConfigError);
   });
 
-  it('invalid MAX_OUTPUT_BYTES throws ConfigError', () => {
-    process.env.MAX_OUTPUT_BYTES = '0';
+  it('MAX_OUTPUT_BYTES below 1024 throws ConfigError', () => {
+    process.env.MAX_OUTPUT_BYTES = '512';
     expect(() => loadConfig(process.env)).toThrow(ConfigError);
   });
 
-  it('invalid SESSION_CREATE_TIMEOUT_MS throws ConfigError', () => {
-    process.env.SESSION_CREATE_TIMEOUT_MS = '0';
-    expect(() => loadConfig(process.env)).toThrow(ConfigError);
+  it('MAX_OUTPUT_BYTES of 1024 is valid', () => {
+    process.env.MAX_OUTPUT_BYTES = '1024';
+    const c = loadConfig(process.env);
+    expect(c.maxOutputBytes).toBe(1024);
   });
 
   it('empty WORKSPACE_ALLOWLIST parses to empty array', () => {

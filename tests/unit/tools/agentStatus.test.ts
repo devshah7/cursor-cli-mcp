@@ -101,4 +101,21 @@ describe('agent_status tool', () => {
     const out = await wrapped({});
     expect(JSON.parse(getText(out)).binaryPath).toBe('/opt/agent');
   });
+
+  it('timeout returns TIMEOUT StructuredError', async () => {
+    const executor = new MockExecutor(async () =>
+      Promise.resolve({
+        stdout: '',
+        stderrExcerpt: '',
+        exitCode: 124,
+        timedOut: true,
+        outputTruncated: false,
+        durationMs: 1000,
+      }),
+    );
+    const wrapped = wrapTool(createAgentStatusDescriptor(ctx), executor, ctx);
+    const out = await wrapped({});
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('TIMEOUT');
+  });
 });

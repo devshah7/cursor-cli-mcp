@@ -8,7 +8,7 @@ export const runAgentSchema = z.object({
   prompt: z.string().min(1).max(32_000),
   model: z
     .string()
-    .regex(/^[\w./:-]+$/)
+    .regex(/^[\w.-]+(\/[\w.-]+)?$/)
     .max(200)
     .optional(),
   mode: z.enum(['agent', 'plan', 'ask']).default('agent'),

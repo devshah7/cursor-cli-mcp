@@ -1,5 +1,4 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import type { Config } from '../../config.js';
 import type { IAgentExecutor } from '../../ports/agentExecutor.js';
 import type { ExecutorOptions, ExecutorResult } from '../../ports/executorTypes.js';
 import { RingBuffer } from './ringBuffer.js';
@@ -17,9 +16,7 @@ function stderrExcerpt(buf: RingBuffer): string {
 const tracked = new Set<ChildProcess>();
 
 export class AgentCliExecutor implements IAgentExecutor {
-  constructor(config: Pick<Config, 'agentBinaryPath' | 'agentTimeoutMs' | 'maxOutputBytes'>) {
-    void config;
-  }
+  constructor() {}
 
   async run(options: ExecutorOptions): Promise<ExecutorResult> {
     const started = Date.now();
