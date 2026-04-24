@@ -28,6 +28,7 @@ export function createSessionResumeDescriptor(
 ): ToolDescriptor<SessionResumeParsed> {
   return {
     name: 'session_resume',
+    supportsStreaming: true,
     description:
       'Resume an existing agent chat session with an additional prompt (`agent -p … --resume <chatId>`). ' +
       'Note: combining --resume with --print is not explicitly documented by Cursor — ' +

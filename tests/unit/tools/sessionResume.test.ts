@@ -28,6 +28,10 @@ function baseConfig(overrides?: Partial<Config>): Config {
 describe('session_resume tool', () => {
   const ctx: PipelineContext = pipelineContextFromConfig(baseConfig());
 
+  it('descriptor has supportsStreaming set to true', () => {
+    expect(createSessionResumeDescriptor(ctx).supportsStreaming).toBe(true);
+  });
+
   it('happy path returns AgentRunResult JSON on exit 0', async () => {
     const executor = new MockExecutor(async () =>
       Promise.resolve({

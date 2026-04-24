@@ -472,10 +472,10 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** `sessionResume.ts` uses `toolCtx.sendNotification` in its handler but the descriptor does not set `supportsStreaming: true`. Since `server.ts` only wires the notification callback when `tool.supportsStreaming === true`, `sendNotification` is always `undefined` at runtime — the streaming code path is silently dead.
 
-- [ ] **T6.2** — Add `supportsStreaming: true` to `createSessionResumeDescriptor` return value:
+- [x] **T6.2** — Add `supportsStreaming: true` to `createSessionResumeDescriptor` return value:
   - Mirror the pattern already used in `createRunAgentDescriptor` (line 44 of `runAgent.ts`).
   - Add a unit test asserting `createSessionResumeDescriptor(ctx).supportsStreaming === true`.
-  - Acceptance: `supportsStreaming: true` present on descriptor; streaming test passes; live `session_resume` call emits MCP logging chunks; all existing tests pass.
+  - Acceptance: `supportsStreaming: true` present on descriptor; streaming test passes; live `session_resume` call emits MCP logging chunks; all existing tests pass. _(2026-04-24)_
 
 ---
 
