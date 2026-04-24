@@ -1,6 +1,6 @@
 # Agent Rules: cursor-cli-mcp
 
-**Last updated:** 2026-04-21  
+**Last updated:** 2026-04-24  
 **Status:** Mandatory — every AI agent working on this repo must read this file before writing any code.
 
 These rules exist to eliminate chaos when multiple agents work in parallel. They are non-negotiable. If a rule conflicts with an agent's instinct to "clean up" or "improve" something, the rule wins.
@@ -204,7 +204,32 @@ If you are working on `feat/phase-2-tool-sessions` and the gate shows `FAIL`, st
 
 ---
 
-## Rule 15: Conflicts Go to Humans
+## Rule 15: Interface-Changing Branches Must Merge First
+
+If your branch changes a shared interface (a type, a port contract, or a cross-cutting module like `ExecutorOptions`, `AgentCommand`, `PipelineContext`, `ToolDescriptor`, `Config`), it **must be merged to `dev` before any other branch that depends on that interface opens a PR or merges**.
+
+**Why this matters:** Branches that each pass CI in isolation can break `dev` after merging if one changes an interface that another branch tests against. The full test suite on `dev` is the only gate that catches this — individual branch CI does not.
+
+**How to handle it:**
+
+1. **Before opening a PR** — check whether any in-flight branch touches the same interface. If yes, coordinate merge order explicitly.
+2. **Interface-changing branch merges first.** All dependent branches must `git rebase origin/dev` after that merge and re-run the full gate checklist before pushing.
+3. **After any merge to `dev`** — run `npm run test:unit` on `dev` locally before declaring the phase complete. Do not rely solely on per-branch CI.
+4. **If `dev` breaks after a merge** — fix it on `dev` directly with a targeted commit. Do not revert the merged PR; isolate and patch the specific incompatibility.
+
+**Interfaces to watch for cross-branch conflicts:**
+
+| Interface | File | Risk |
+|-----------|------|------|
+| `AgentCommand` / `ExecutorOptions` | `src/ports/executorTypes.ts` | Any branch touching executor or tools |
+| `IAgentExecutor` | `src/ports/agentExecutor.ts` | Executor and all tool tests |
+| `PipelineContext` | `src/pipeline/toolPipeline.ts` | Pipeline, server, and all tool tests |
+| `ToolDescriptor` | `src/registry/tools.ts` | Registry, server, and all tool descriptors |
+| `Config` | `src/config.ts` | Config tests, server wiring, all tool tests |
+
+---
+
+## Rule 16: Conflicts Go to Humans
 
 If you encounter a merge conflict you cannot resolve cleanly by following ARCHITECTURE.md, stop and flag it. Do not guess at the intended behavior. Do not pick "ours" or "theirs" arbitrarily.
 
@@ -226,6 +251,8 @@ The correct resolution for conflicts in `src/server.ts` (tool registrations) is 
 | Touching files outside branch scope | Creates conflicts, hidden coupling |
 | Raw errors to MCP caller | Leaks internal state, breaks client parsing |
 | `JSON.parse()` without try/catch | Unhandled crash on bad agent output |
+| Merging interface-changing branch out of order | Breaks `dev` even when per-branch CI was green |
+| Skipping `npm run test:unit` on `dev` after a merge | Only the merged state reveals cross-branch conflicts |
 
 ---
 
