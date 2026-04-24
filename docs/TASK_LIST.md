@@ -430,10 +430,10 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 - [x] All unit tests pass (target ≥ 95 tests after new test additions) _(2026-04-24 — 104 tests local)_
 - [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24 local)_
-- [ ] Live MCP smoke test: `list_models` returns only clean model IDs (no "Available models" or "Tip:" lines)
-- [ ] Live MCP smoke test: `session_create` completes within 10s (not 120s)
-- [ ] CI green
-- [ ] Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) resolved and closed
+- [x] Live MCP smoke test: `list_models` returns only clean model IDs (no "Available models" or "Tip:" lines) _(2026-04-24 — 95 clean IDs confirmed via live tool test)_
+- [x] Live MCP smoke test: `session_create` completes within 10s (not 120s) _(2026-04-24 — clean UUID returned, no hang)_
+- [x] CI green _(2026-04-24)_
+- [x] Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) resolved and closed _(2026-04-24)_
 
 ---
 
@@ -592,15 +592,15 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Phase 6 Gate (all branches merged to `dev`, pre-v1.2 release):**
 
-- [ ] Zero imports from `adapters/` in any `src/tools/*.ts` file (`npm run lint` enforces)
-- [ ] `session_resume` streaming wired and tested
-- [ ] All documentation items corrected (README, API_SPEC, ARCHITECTURE, CLAUDE.md)
-- [x] `supportsStreaming` registry snapshot test covers all streaming tools _(2026-04-24)_
-- [x] `supportsStreaming` contract documented in AGENT_RULES.md _(2026-04-24)_
-- [ ] Issue #21 items #8 and #9 confirmed resolved; issue closed
-- [ ] `npm run lint && npm run typecheck && npm run build` exit 0
-- [ ] `npm run test:unit` passes with ≥ 103 tests
-- [ ] CI green on `dev`
+- [x] Zero imports from `adapters/` in any `src/tools/*.ts` file (`npm run lint` enforces) _(2026-04-24 — T6.1 + T6.10 merged via PR #32)_
+- [x] `session_resume` streaming wired and tested _(2026-04-24 — T6.2 merged via PR #33)_
+- [x] All documentation items corrected (README, API_SPEC, ARCHITECTURE, CLAUDE.md) _(2026-04-24 — T6.3–T6.6 merged via PR #34)_
+- [x] `supportsStreaming` registry snapshot test covers all streaming tools _(2026-04-24 — T6.11 merged via PR #36)_
+- [x] `supportsStreaming` contract documented in AGENT_RULES.md _(2026-04-24 — T6.12 merged via PR #36)_
+- [x] Issue #21 items #8 and #9 confirmed resolved; issue closed _(2026-04-24 — T6.13 merged via PR #37)_
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24)_
+- [x] `npm run test:unit` passes with ≥ 103 tests _(2026-04-24 — 104 tests)_
+- [x] CI green on `dev` _(2026-04-24)_
 - [ ] v1.2 release PR `dev → main` created
 
 ---
