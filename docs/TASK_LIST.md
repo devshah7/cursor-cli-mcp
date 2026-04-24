@@ -542,11 +542,11 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** The ESLint config has no rule preventing `tools/` from importing `adapters/`. The architecture violation (T6.1) existed undetected because linting has no enforcement for it.
 
-- [ ] **T6.10** — Add an ESLint `no-restricted-imports` rule to `.eslintrc.json` that bans imports matching `**/adapters/**` from files matching `src/tools/**`:
+- [x] **T6.10** — Add an ESLint `no-restricted-imports` rule to `.eslintrc.json` that bans imports matching `**/adapters/**` from files matching `src/tools/**`:
   - Use the `overrides` array to scope the rule to `src/tools/*.ts` only.
   - Add a clear `message` on the rule: `"tools/ must not import from adapters/ — use ports/ only (see ARCHITECTURE.md)"`.
   - Verify `npm run lint` exits non-zero if a tool file imports from adapters (test manually or add a lint-only fixture).
-  - Acceptance: rule present in config; `npm run lint` catches any future tools→adapters imports; existing tools pass lint after T6.1 removes the violations.
+  - Acceptance: rule present in config; `npm run lint` catches any future tools→adapters imports; existing tools pass lint after T6.1 removes the violations. _(2026-04-24)_
 
 ---
 
