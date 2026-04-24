@@ -517,22 +517,22 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** Three source modules have zero test coverage; one existing test covers only the rejection path for a fix, not the positive case.
 
-- [ ] **T6.7** — Create `tests/unit/errors.test.ts`:
+- [x] **T6.7** — Create `tests/unit/errors.test.ts`:
   - Assert all `ErrorClass` enum values exist and match the string literals in API_SPEC.md section 2.1 (`VALIDATION`, `SECURITY`, `TIMEOUT`, `BINARY_NOT_FOUND`, `AUTH_REQUIRED`, `AGENT_ERROR`, `UNKNOWN`).
   - Assert `buildError(ErrorClass.TIMEOUT, 'msg', { timedOut: true })` returns an object with `errorClass`, `message`, and the extra field.
   - Assert `buildError` without extras returns an object without extra keys.
-  - Acceptance: new test file passes; `npm run test:unit` total count increases by ≥ 3.
+  - Acceptance: new test file passes; `npm run test:unit` total count increases by ≥ 3. _(2026-04-24)_
 
-- [ ] **T6.8** — Create `tests/unit/registry/tools.test.ts`:
+- [x] **T6.8** — Create `tests/unit/registry/tools.test.ts`:
   - Assert `buildToolDescriptors(config)` returns exactly 5 descriptors.
   - Assert each expected tool name is present: `run_agent`, `list_models`, `agent_status`, `session_create`, `session_resume`.
   - Assert `run_agent` descriptor has `supportsStreaming: true`.
-  - Acceptance: new test file passes; catches any accidental tool omission in the registry.
+  - Acceptance: new test file passes; catches any accidental tool omission in the registry. _(2026-04-24)_
 
-- [ ] **T6.9** — Strengthen `session_create` workspace forwarding test in `tests/unit/tools/sessionCreate.test.ts`:
+- [x] **T6.9** — Strengthen `session_create` workspace forwarding test in `tests/unit/tools/sessionCreate.test.ts`:
   - Current test only asserts SECURITY rejection when workspace is outside allowlist (negative case).
   - Add a positive test: capture the args array received by the mock executor when `workspace` is provided within the allowlist; assert `--workspace` and the path appear in the args.
-  - Acceptance: positive forwarding test passes; confirms T5.4 fix is exercised end-to-end through the tool handler.
+  - Acceptance: positive forwarding test passes; confirms T5.4 fix is exercised end-to-end through the tool handler. _(2026-04-24)_
 
 ---
 
@@ -556,7 +556,7 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [ ] `session_resume` streaming wired and tested
 - [ ] All documentation items corrected (README, API_SPEC, ARCHITECTURE, CLAUDE.md)
 - [ ] `npm run lint && npm run typecheck && npm run build` exit 0
-- [ ] `npm run test:unit` passes with ≥ 100 tests
+- [ ] `npm run test:unit` passes with ≥ 100 tests _(2026-04-24 — 102 tests on `chore/test-coverage` branch; gate pending full Phase 6 merge)_
 - [ ] CI green
 - [ ] v1.2 release PR `dev → main` created
 
