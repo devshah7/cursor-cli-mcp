@@ -237,6 +237,14 @@ The correct resolution for conflicts in `src/server.ts` (tool registrations) is 
 
 ---
 
+## Rule 17: Streaming Descriptor Contract
+
+Any tool handler that reads `toolCtx.sendNotification` (to stream stdout chunks to the client) **must** set `supportsStreaming: true` on its tool descriptor in `src/registry/tools.ts`.
+
+If the flag is missing, `server.ts` never injects the callback and the handler’s streaming branch is silently dead — the exact failure mode fixed for `session_resume` in Phase 6.
+
+---
+
 ## Forbidden Patterns (Quick Reference)
 
 | Pattern | Why forbidden |
@@ -253,6 +261,7 @@ The correct resolution for conflicts in `src/server.ts` (tool registrations) is 
 | `JSON.parse()` without try/catch | Unhandled crash on bad agent output |
 | Merging interface-changing branch out of order | Breaks `dev` even when per-branch CI was green |
 | Skipping `npm run test:unit` on `dev` after a merge | Only the merged state reveals cross-branch conflicts |
+| `sendNotification` used in a handler without `supportsStreaming: true` | Callback never wired; streaming path is a no-op |
 
 ---
 
