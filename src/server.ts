@@ -34,6 +34,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     workspaceAllowlist: config.workspaceAllowlist,
     agentBinaryPath: config.agentBinaryPath,
     agentTimeoutMs: config.agentTimeoutMs,
+    sessionCreateTimeoutMs: config.sessionCreateTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
   };
 

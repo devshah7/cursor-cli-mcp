@@ -19,6 +19,7 @@ function pc(allowlist: string[]): PipelineContext {
     workspaceAllowlist: allowlist,
     agentBinaryPath: '/usr/local/bin/agent',
     agentTimeoutMs: 5000,
+    sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
   };
 }
