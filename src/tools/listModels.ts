@@ -34,6 +34,11 @@ export function parseModelsStdout(stdout: string): string[] {
   return t
     .split(/\r?\n/)
     .map((s) => s.trim())
+    .filter(
+      (s) =>
+        s.length > 0 && s.includes(' - ') && !s.startsWith('Available') && !s.startsWith('Tip:'),
+    )
+    .map((s) => s.split(' - ')[0]?.trim() ?? '')
     .filter((s) => s.length > 0);
 }
 
