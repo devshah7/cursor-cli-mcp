@@ -485,29 +485,29 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** Multiple outdated and missing documentation items identified across 4 files.
 
-- [ ] **T6.3** — Fix `README.md` outdated items:
+- [x] **T6.3** — Fix `README.md` outdated items:
   - Binary path table: replace `agent` binary name with `cursor-agent` throughout.
   - `session_create` known-behaviour note: replace reference to `AGENT_TIMEOUT_MS` with `SESSION_CREATE_TIMEOUT_MS` (default 10s, not 120s).
   - Env vars table: add `SESSION_CREATE_TIMEOUT_MS` row (`10000` default, description: "Milliseconds before session_create subprocess is killed — prevents create-chat hang").
   - MCP server config example: add `SESSION_CREATE_TIMEOUT_MS` to the example env block.
-  - Acceptance: all four items corrected; no mention of bare `agent` binary name in path tables.
+  - Acceptance: all four items corrected; no mention of bare `agent` binary name in path tables. _(2026-04-24)_
 
-- [ ] **T6.4** — Fix `docs/API_SPEC.md` outdated and missing items:
+- [x] **T6.4** — Fix `docs/API_SPEC.md` outdated and missing items:
   - Remove `session_list` tool section (or replace with a clearly marked `CANCELLED` notice explaining `agent ls` is TUI-only).
   - Add `SESSION_CREATE_TIMEOUT_MS` to the environment variables reference table.
   - Update `session_create` CLI invocation description to document that `workspace` is forwarded as `--workspace <path>` to the binary.
-  - Acceptance: no live documentation of a cancelled tool; all three items addressed; typecheck / build unaffected.
+  - Acceptance: no live documentation of a cancelled tool; all three items addressed; typecheck / build unaffected. _(2026-04-24)_
 
-- [ ] **T6.5** — Fix `docs/ARCHITECTURE.md` outdated and missing items:
+- [x] **T6.5** — Fix `docs/ARCHITECTURE.md` outdated and missing items:
   - Module directory structure: correct session tool paths from `src/tools/sessions/` (empty stub directory) to `src/tools/sessionCreate.ts` / `src/tools/sessionResume.ts` at the tools root.
   - Module table: add `src/ports/executorTypes.ts` as a Ports layer entry (currently listed by tests and adapters but absent from the table).
   - Add `SESSION_CREATE_TIMEOUT_MS` to the Config interface documentation in section 4.8.
-  - Acceptance: directory structure in doc matches actual filesystem; all three items addressed.
+  - Acceptance: directory structure in doc matches actual filesystem; all three items addressed. _(2026-04-24)_
 
-- [ ] **T6.6** — Update `CLAUDE.md` Project State section:
+- [x] **T6.6** — Update `CLAUDE.md` Project State section:
   - Change Phase 5 active branches from listed as "ACTIVE" to noting they are merged to `dev` (PRs #23–#31).
   - Update current version state: v1.1 in progress → v1.1 shipped to dev, pending `dev → main` release PR.
-  - Acceptance: Project State section accurately reflects post-audit current state.
+  - Acceptance: Project State section accurately reflects post-audit current state. _(2026-04-24)_
 
 ---
 

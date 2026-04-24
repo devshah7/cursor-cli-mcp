@@ -89,8 +89,8 @@ Should show your Cursor account email. If not, sign in to Cursor first.
 
 | Platform | `AGENT_BINARY_PATH` |
 |----------|---------------------|
-| macOS / Linux / WSL | `~/.local/bin/agent` |
-| Windows | `%LocalAppData%\cursor-agent\agent.exe` |
+| macOS / Linux / WSL | `~/.local/bin/cursor-agent` |
+| Windows | `%LocalAppData%\cursor-agent\cursor-agent.exe` |
 
 ---
 
@@ -169,9 +169,10 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
       "command": "node",
       "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
       "env": {
-        "AGENT_BINARY_PATH": "/Users/you/.local/bin/agent",
+        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
         "WORKSPACE_ALLOWLIST": "/Users/you/projects:/Users/you/work",
         "AGENT_TIMEOUT_MS": "120000",
+        "SESSION_CREATE_TIMEOUT_MS": "10000",
         "MAX_OUTPUT_BYTES": "524288",
         "LOG_LEVEL": "info"
       }
@@ -180,7 +181,7 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
 }
 ```
 
-Replace `AGENT_BINARY_PATH` with your binary path from the table above, and `WORKSPACE_ALLOWLIST` with the colon-separated absolute paths the agent is allowed to operate on.
+Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table above, and `WORKSPACE_ALLOWLIST` with the colon-separated absolute paths the agent is allowed to operate on.
 
 ### 4. Restart Claude Desktop
 
@@ -190,9 +191,10 @@ Replace `AGENT_BINARY_PATH` with your binary path from the table above, and `WOR
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AGENT_BINARY_PATH` | Platform default | Absolute path to the `agent` binary |
+| `AGENT_BINARY_PATH` | Platform default | Absolute path to the `cursor-agent` binary |
 | `WORKSPACE_ALLOWLIST` | `""` (deny all) | Colon-separated list of allowed absolute paths. Empty = deny all workspace operations. No allow-all mode. |
 | `AGENT_TIMEOUT_MS` | `120000` | Milliseconds before the subprocess is killed |
+| `SESSION_CREATE_TIMEOUT_MS` | `10000` | Milliseconds before `session_create` (`create-chat`) subprocess is killed — prevents create-chat hang |
 | `MAX_OUTPUT_BYTES` | `524288` | Maximum stdout captured (ring buffer — older bytes are dropped) |
 | `LOG_LEVEL` | `info` | One of: `debug`, `info`, `warn`, `error` |
 | `LOG_PROMPTS` | `false` | Log prompt text — only at `debug` level if `true` |
@@ -244,7 +246,7 @@ Creates a new empty chat session and returns its ID.
 
 Returns `{ "sessionId": "<uuid>" }`.
 
-> **Known behaviour:** the `agent create-chat` process occasionally hangs after printing the ID. The executor timeout (`AGENT_TIMEOUT_MS`) is the safety net.
+> **Known behaviour:** the `create-chat` subprocess occasionally hangs after printing the ID. `SESSION_CREATE_TIMEOUT_MS` (default 10s) is the safety net for `session_create` specifically.
 
 ---
 
@@ -284,7 +286,7 @@ You should see a JSON-RPC response with `serverInfo.name: "cursor-cli-mcp"`.
 | `AUTH_REQUIRED` error | CLI not authenticated | Sign in to Cursor, then confirm `agent status` shows your account |
 | `SECURITY` error on workspace path | Path not in `WORKSPACE_ALLOWLIST` | Add the path to `WORKSPACE_ALLOWLIST` in your Claude Desktop config and restart |
 | Tools don't appear in Claude Desktop | Server not started / config wrong | Check the config path and JSON syntax; run the verification command above |
-| `session_create` hangs | Known Cursor CLI bug | Reduce `AGENT_TIMEOUT_MS` to get a faster failure; the session ID is usually printed before the hang |
+| `session_create` hangs | Known Cursor CLI bug | Tune `SESSION_CREATE_TIMEOUT_MS` (default 10s); the session ID is usually printed before the hang |
 
 ---
 
