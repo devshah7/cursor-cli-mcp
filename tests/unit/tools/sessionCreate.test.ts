@@ -61,6 +61,27 @@ describe('session_create tool', () => {
     });
   });
 
+  it('forwards workspace into create-chat argv when path is allowlisted', async () => {
+    let seenArgs: string[] = [];
+    const executor = new MockExecutor(async (opts) => {
+      seenArgs = opts.args;
+      return {
+        stdout: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      };
+    });
+    const wrapped = wrapTool(createSessionCreateDescriptor(ctx), executor, ctx);
+    const out = await wrapped({ workspace: '/allowed/project' });
+    expect(out.isError).not.toBe(true);
+    expect(seenArgs).toContain('create-chat');
+    expect(seenArgs).toContain('--workspace');
+    expect(seenArgs).toContain('/allowed/project');
+  });
+
   it('SECURITY when workspace outside allowlist', async () => {
     const executor = new MockExecutor(async () =>
       Promise.resolve({
