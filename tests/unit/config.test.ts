@@ -41,9 +41,15 @@ describe('loadConfig', () => {
     expect(() => loadConfig(process.env)).toThrow(ConfigError);
   });
 
-  it('invalid MAX_OUTPUT_BYTES throws ConfigError', () => {
-    process.env.MAX_OUTPUT_BYTES = '0';
+  it('MAX_OUTPUT_BYTES below 1024 throws ConfigError', () => {
+    process.env.MAX_OUTPUT_BYTES = '512';
     expect(() => loadConfig(process.env)).toThrow(ConfigError);
+  });
+
+  it('MAX_OUTPUT_BYTES of 1024 is valid', () => {
+    process.env.MAX_OUTPUT_BYTES = '1024';
+    const c = loadConfig(process.env);
+    expect(c.maxOutputBytes).toBe(1024);
   });
 
   it('empty WORKSPACE_ALLOWLIST parses to empty array', () => {
