@@ -77,6 +77,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 
   const agentTimeoutMs = parsePositiveInt(env.AGENT_TIMEOUT_MS, 120_000, 'AGENT_TIMEOUT_MS');
   const maxOutputBytes = parsePositiveInt(env.MAX_OUTPUT_BYTES, 524_288, 'MAX_OUTPUT_BYTES');
+  if (maxOutputBytes < 1024) {
+    throw new ConfigError('MAX_OUTPUT_BYTES must be >= 1024');
+  }
 
   const allowRaw = env.WORKSPACE_ALLOWLIST ?? '';
   const workspaceAllowlist =
