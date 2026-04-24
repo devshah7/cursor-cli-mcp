@@ -324,11 +324,11 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/adapters/agentCli/executor.ts`, `tests/unit/adapters/executor.test.ts`
 
-- [ ] **T5.1** — Fix `AgentCliExecutor` constructor: line 21 contains `void config` which silently discards all injected values (`agentBinaryPath`, `agentTimeoutMs`, `maxOutputBytes`). Two valid fixes — pick one and document the choice in a comment:
+- [x] **T5.1** — Fix `AgentCliExecutor` constructor: line 21 contains `void config` which silently discards all injected values (`agentBinaryPath`, `agentTimeoutMs`, `maxOutputBytes`). Two valid fixes — pick one and document the choice in a comment:
   - Option A (preferred): remove the constructor param entirely and always read values from `ExecutorOptions` per-call (current implicit behaviour — make it explicit by deleting the dead param).
   - Option B: store `config` on the instance as a fallback when `ExecutorOptions` fields are missing.
   - Update or add a unit test that confirms injecting a config with a custom `agentBinaryPath` does not silently discard it.
-  - Acceptance: `void config` line gone; typecheck passes; executor tests pass.
+  - Acceptance: `void config` line gone; typecheck passes; executor tests pass. _(2026-04-24)_
 
 ---
 
@@ -336,24 +336,24 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/config.ts`, `src/tools/sessionCreate.ts`, `src/adapters/agentCli/argBuilder.ts`, `tests/unit/tools/sessionCreate.test.ts`, `tests/unit/adapters/argBuilder.test.ts`
 
-- [ ] **T5.2** — Add `SESSION_CREATE_TIMEOUT_MS` to `src/config.ts`:
+- [x] **T5.2** — Add `SESSION_CREATE_TIMEOUT_MS` to `src/config.ts`:
   - Parse new env var with `parsePositiveInt`, default `10_000`.
   - Add `sessionCreateTimeoutMs: number` to `Config` interface.
   - Add `sessionCreateTimeoutMs: number` to `PipelineContext` in `src/pipeline/toolPipeline.ts`.
   - Wire it through `src/index.ts` composition root.
   - Update `src/server.ts` if `PipelineContext` is constructed there.
-  - Acceptance: `SESSION_CREATE_TIMEOUT_MS=5000 node dist/index.js` starts without error; config unit test for new var passes.
+  - Acceptance: `SESSION_CREATE_TIMEOUT_MS=5000 node dist/index.js` starts without error; config unit test for new var passes. _(2026-04-24)_
 
-- [ ] **T5.3** — Use `sessionCreateTimeoutMs` in `sessionCreate.ts` handler:
+- [x] **T5.3** — Use `sessionCreateTimeoutMs` in `sessionCreate.ts` handler:
   - Line 82: replace `timeoutMs: toolCtx.agentTimeoutMs` with `timeoutMs: toolCtx.sessionCreateTimeoutMs`.
   - Add unit test: mock a slow executor (timedOut: true) and assert the tool returns a TIMEOUT error, not a 2-minute hang.
-  - Acceptance: handler uses the new timeout; test passes; typecheck passes.
+  - Acceptance: handler uses the new timeout; test passes; typecheck passes. _(2026-04-24)_
 
-- [ ] **T5.4** — Fix `workspace` forwarding for `session_create`:
+- [x] **T5.4** — Fix `workspace` forwarding for `session_create`:
   - `src/adapters/agentCli/argBuilder.ts`: change `buildSessionCreateArgs()` signature to `buildSessionCreateArgs(workspace?: string): string[]`; append `['--workspace', workspace]` when provided.
   - `src/tools/sessionCreate.ts`: pass `input.workspace` to `buildSessionCreateArgs()`.
   - Add argBuilder unit test: `buildSessionCreateArgs('/tmp/test')` includes `['--workspace', '/tmp/test']`; `buildSessionCreateArgs()` omits the flag.
-  - Acceptance: argBuilder test passes; workspace appears in CLI args when provided; typecheck passes.
+  - Acceptance: argBuilder test passes; workspace appears in CLI args when provided; typecheck passes. _(2026-04-24)_
 
 ---
 
@@ -361,12 +361,12 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/tools/runAgent.ts`, `src/tools/sessionResume.ts`, `tests/unit/tools/runAgent.test.ts`, `tests/unit/tools/sessionResume.test.ts`
 
-- [ ] **T5.5** — Tighten the `model` Zod regex to block path traversal characters:
+- [x] **T5.5** — Tighten the `model` Zod regex to block path traversal characters:
   - Current pattern: `/^[\w./:-]+$/` — allows `/` and `:` which permit strings like `../../etc/passwd`.
   - Required pattern: `/^[\w.-]+(\/[\w.-]+)?$/` — covers real model IDs (`claude-4-sonnet`, `openai/gpt-4o`, `gpt-5.4-high`) while blocking bare traversal sequences.
   - Change the regex in both `runAgent.ts` and `sessionResume.ts` (both have identical schemas — update both).
   - Add unit tests: `../../etc/passwd` → Zod rejection; `claude-4-sonnet` → passes; `openai/gpt-4o` → passes; `gpt-5.4-high` → passes.
-  - Acceptance: new regex in both files; unit tests pass; typecheck passes.
+  - Acceptance: new regex in both files; unit tests pass; typecheck passes. _(2026-04-24)_
 
 ---
 
@@ -374,11 +374,11 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/tools/agentStatus.ts`, `tests/unit/tools/agentStatus.test.ts`
 
-- [ ] **T5.6** — Ensure `agent_status` returns a `StructuredError` (not raw `ExecutorResult`) on timeout or exit 127:
+- [x] **T5.6** — Ensure `agent_status` returns a `StructuredError` (not raw `ExecutorResult`) on timeout or exit 127:
   - Currently the handler returns `r: ExecutorResult` directly on `result.timedOut || result.exitCode !== 0` — this bypasses `classifyExecutorFailure` and breaks the consistent error contract.
   - Fix: let the normal pipeline error-mapping path handle these cases. The tool handler should only handle the happy path and the `authenticated: false` non-error case (exit non-zero from a found binary). Timeout and ENOENT should propagate as they do for other tools.
   - Verify existing 4 agentStatus tests still pass and add a test for the timeout case returning a TIMEOUT `StructuredError`.
-  - Acceptance: timeout → `{ errorClass: "TIMEOUT", ... }`; ENOENT → `{ errorClass: "BINARY_NOT_FOUND", ... }`; exit non-zero (binary present) → `{ authenticated: false }` success; all 5+ tests pass.
+  - Acceptance: timeout → `{ errorClass: "TIMEOUT", ... }`; ENOENT → `{ errorClass: "BINARY_NOT_FOUND", ... }`; exit non-zero (binary present) → `{ authenticated: false }` success; all 5+ tests pass. _(2026-04-24)_
 
 ---
 
@@ -386,12 +386,12 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/tools/listModels.ts`, `tests/unit/tools/listModels.test.ts`
 
-- [ ] **T5.7** — Fix `parseModelsStdout` to strip non-model lines from the CLI's line-based output:
+- [x] **T5.7** — Fix `parseModelsStdout` to strip non-model lines from the CLI's line-based output:
   - **Observed (live test 2026-04-23):** first element `"Available models"`, last element `"Tip: use --model <id> (or /model <id> in interactive mode) to switch."` — both are header/footer strings, not model IDs.
   - Fix: after splitting lines, filter out lines that do not match a model entry pattern. A model line contains a ` - ` separator (ID + display name). Strip any line that starts with `"Available"`, starts with `"Tip:"`, or is empty.
   - Simplest safe filter: `line.includes(' - ')` — all real model lines have the ` - ` separator between ID and display name; header/footer lines do not.
   - Add unit test with the raw output format observed from the live CLI (include "Available models" header, real model lines, and "Tip:" footer). Assert result contains only ID strings, not header/footer.
-  - Acceptance: `parseModelsStdout` returns clean model IDs only; updated tests pass; old tests still pass.
+  - Acceptance: `parseModelsStdout` returns clean model IDs only; updated tests pass; old tests still pass. _(2026-04-24)_
 
 ---
 
@@ -399,7 +399,7 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/config.ts`, `tests/unit/config.test.ts`
 
-- [ ] **T5.8** — Correct `defaultAgentBinaryPath()` to use `cursor-agent` binary name:
+- [x] **T5.8** — Correct `defaultAgentBinaryPath()` to use `cursor-agent` binary name:
   - Current defaults reference `agent` binary at `/usr/local/bin/agent` and `/Applications/Cursor.app/.../agent` — the real binary is `cursor-agent`.
   - Update per confirmed install locations:
 
@@ -410,7 +410,7 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
   - Use `os.homedir()` for the `~` expansion (already imported).
   - Update config unit test for binary path defaults.
-  - Acceptance: `defaultAgentBinaryPath()` returns a path containing `cursor-agent`; typecheck passes.
+  - Acceptance: `defaultAgentBinaryPath()` returns a path containing `cursor-agent`; typecheck passes. _(2026-04-24)_
 
 ---
 
@@ -418,18 +418,18 @@ All Phase 5 branches are **PARALLEL** with each other unless noted.
 
 **Files in scope:** `src/config.ts`, `tests/unit/config.test.ts`
 
-- [ ] **T5.9** — Add minimum validation on `maxOutputBytes`:
+- [x] **T5.9** — Add minimum validation on `maxOutputBytes`:
   - A value of 0 silently truncates all output via the ring buffer's early-return path — this is a silent data-loss bug, not a recoverable error.
   - In `parsePositiveInt` or inline in the `maxOutputBytes` parse: throw `ConfigError` if the parsed value is less than `1024`.
   - Add unit test: `MAX_OUTPUT_BYTES=512` → `ConfigError`; `MAX_OUTPUT_BYTES=1024` → valid.
-  - Acceptance: config throws on values < 1024; test passes; existing config tests still pass.
+  - Acceptance: config throws on values < 1024; test passes; existing config tests still pass. _(2026-04-24)_
 
 ---
 
 **Phase 5 Gate (all branches merged to `dev`, pre-v1.1 release):**
 
-- [ ] All unit tests pass (target ≥ 95 tests after new test additions)
-- [ ] `npm run lint && npm run typecheck && npm run build` exit 0
+- [x] All unit tests pass (target ≥ 95 tests after new test additions) _(2026-04-24 — 104 tests local)_
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24 local)_
 - [ ] Live MCP smoke test: `list_models` returns only clean model IDs (no "Available models" or "Tip:" lines)
 - [ ] Live MCP smoke test: `session_create` completes within 10s (not 120s)
 - [ ] CI green
@@ -581,12 +581,12 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 **Finding:** The issue comment flagged `maxOutputBytes` minimum validation as still open. However, the validation **is already present** in the current `dev` codebase (`config.ts:92-93`: `if (maxOutputBytes < 1024) throw new ConfigError(...)`), and the config test already covers it. The issue comment was written before `chore/config-validation` was merged to `dev`.
 
-- [ ] **T6.13** — Confirm and close issue #21 item #9:
+- [x] **T6.13** — Confirm and close issue #21 item #9:
   - Verify `config.ts` on `dev` has `if (maxOutputBytes < 1024) throw new ConfigError(...)` (lines 92–93).
   - Verify `tests/unit/config.test.ts` has a test asserting `MAX_OUTPUT_BYTES=512` → `ConfigError` and `MAX_OUTPUT_BYTES=1024` → valid.
   - Post a reply on issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) confirming item #9 is resolved: the validation landed in `chore/config-validation` (PR merged to `dev`); the comment predates that merge.
   - Mark Phase 5 task T5.9 as `[x]` complete in this file with date.
-  - Acceptance: issue #21 reply posted; T5.9 marked complete; no code change needed.
+  - Acceptance: issue #21 reply posted; T5.9 marked complete; no code change needed. _(2026-04-24)_
 
 ---
 
