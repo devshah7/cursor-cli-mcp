@@ -48,7 +48,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
       tool.name,
       { description: tool.description, inputSchema: tool.schema },
       async (args, extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => {
-        if (tool.name !== 'run_agent') {
+        if (!tool.supportsStreaming) {
           return handler(args);
         }
         const sendNotification = (chunk: string): void => {
@@ -56,7 +56,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
             .sendLoggingMessage(
               {
                 level: 'debug',
-                logger: 'cursor-cli-mcp.run_agent.stdout',
+                logger: `cursor-cli-mcp.${tool.name}.stdout`,
                 data: { chunk },
               },
               extra.sessionId,

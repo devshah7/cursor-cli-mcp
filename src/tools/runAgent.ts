@@ -41,6 +41,7 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
       'allowlist check applies; omitting it means the agent runs without workspace path validation.',
     schema: runAgentSchema as z.ZodType<RunAgentParsed>,
     pathArgs: pathArgsFromRunAgent,
+    supportsStreaming: true,
     handler: async (input: RunAgentParsed, executor: IAgentExecutor, toolCtx: PipelineContext) => {
       const args = buildRunAgentArgs({
         prompt: input.prompt,
