@@ -16,6 +16,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
   return {
     agentBinaryPath: '/usr/local/bin/agent',
     agentTimeoutMs: 5000,
+    sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
     workspaceAllowlist: ['/allowed'],
     logLevel: 'info',
@@ -26,6 +27,10 @@ function baseConfig(overrides?: Partial<Config>): Config {
 
 describe('session_resume tool', () => {
   const ctx: PipelineContext = pipelineContextFromConfig(baseConfig());
+
+  it('descriptor has supportsStreaming set to true', () => {
+    expect(createSessionResumeDescriptor(ctx).supportsStreaming).toBe(true);
+  });
 
   it('happy path returns AgentRunResult JSON on exit 0', async () => {
     const executor = new MockExecutor(async () =>
@@ -49,10 +54,10 @@ describe('session_resume tool', () => {
     expect(body.exitCode).toBe(0);
   });
 
-  it('passes -p prompt --resume session_id to executor', async () => {
-    let seenArgs: string[] = [];
+  it('passes session resume command to executor with prompt and session id', async () => {
+    let seen: unknown;
     const executor = new MockExecutor(async (opts) => {
-      seenArgs = opts.args;
+      seen = opts.command;
       return {
         stdout: '',
         stderrExcerpt: '',
@@ -67,10 +72,13 @@ describe('session_resume tool', () => {
       session_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       prompt: 'hello',
     });
-    expect(seenArgs[0]).toBe('-p');
-    expect(seenArgs[1]).toBe('hello');
-    expect(seenArgs[2]).toBe('--resume');
-    expect(seenArgs[3]).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+    expect(seen).toEqual({
+      kind: 'session_resume',
+      prompt: 'hello',
+      sessionId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      model: undefined,
+      outputFormat: 'text',
+    });
   });
 
   it('rejects session_id path traversal patterns (VALIDATION)', async () => {
@@ -112,5 +120,43 @@ describe('session_resume tool', () => {
       },
     );
     expect(chunks).toEqual(['chunk']);
+  });
+
+  it('rejects model path traversal payload (VALIDATION)', async () => {
+    let runs = 0;
+    const executor = new MockExecutor(async () => {
+      runs++;
+      throw new Error('should not run');
+    });
+    const wrapped = wrapTool(createSessionResumeDescriptor(ctx), executor, ctx);
+    const out = await wrapped({
+      session_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      prompt: 'x',
+      model: '../../etc/passwd',
+    });
+    expect(runs).toBe(0);
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('VALIDATION');
+  });
+
+  it('accepts canonical model ids', async () => {
+    const accepted = ['claude-4-sonnet', 'openai/gpt-4o', 'gpt-5.4-high'];
+    for (const model of accepted) {
+      const executor = new MockExecutor(async () => ({
+        stdout: 'done',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      }));
+      const wrapped = wrapTool(createSessionResumeDescriptor(ctx), executor, ctx);
+      const out = await wrapped({
+        session_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        prompt: 'next',
+        model,
+      });
+      expect(out.isError).not.toBe(true);
+    }
   });
 });

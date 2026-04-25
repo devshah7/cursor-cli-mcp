@@ -1,24 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { AgentCliExecutor } from '../../../src/adapters/agentCli/executor.js';
 
-const tinyConfig = {
-  agentBinaryPath: '/nonexistent-for-field-only',
-  agentTimeoutMs: 60_000,
-  maxOutputBytes: 1024,
-} as const;
-
 describe('AgentCliExecutor', () => {
   const node = process.execPath;
 
   it('invokes onStdoutChunk as stdout arrives', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const chunks: string[] = [];
     const r = await ex.run({
       binary: node,
-      args: [
-        '-e',
-        'process.stdout.write("P1"); setTimeout(() => { process.stdout.write("P2"); process.exit(0); }, 40);',
-      ],
+      command: {
+        kind: 'host_node_eval',
+        script:
+          'process.stdout.write("P1"); setTimeout(() => { process.stdout.write("P2"); process.exit(0); }, 40);',
+      },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
       onStdoutChunk: (c) => chunks.push(c),
@@ -29,10 +24,10 @@ describe('AgentCliExecutor', () => {
   });
 
   it('captures stdout on exit 0', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stdout.write("OK")'],
+      command: { kind: 'host_node_eval', script: 'process.stdout.write("OK")' },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -42,10 +37,10 @@ describe('AgentCliExecutor', () => {
   });
 
   it('captures stderr excerpt on non-zero exit', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stderr.write("ERR"); process.exit(3)'],
+      command: { kind: 'host_node_eval', script: 'process.stderr.write("ERR"); process.exit(3)' },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -54,10 +49,10 @@ describe('AgentCliExecutor', () => {
   });
 
   it('sets timedOut when watchdog fires', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'setInterval(()=>{},1000)'],
+      command: { kind: 'host_node_eval', script: 'setInterval(()=>{},1000)' },
       timeoutMs: 100,
       maxOutputBytes: 4096,
     });
@@ -66,10 +61,10 @@ describe('AgentCliExecutor', () => {
   });
 
   it('truncates stdout when exceeding maxOutputBytes', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stdout.write("x".repeat(5000))'],
+      command: { kind: 'host_node_eval', script: 'process.stdout.write("x".repeat(5000))' },
       timeoutMs: 5000,
       maxOutputBytes: 100,
     });
@@ -78,10 +73,10 @@ describe('AgentCliExecutor', () => {
   });
 
   it('returns durationMs >= 0', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.exit(0)'],
+      command: { kind: 'host_node_eval', script: 'process.exit(0)' },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -89,10 +84,10 @@ describe('AgentCliExecutor', () => {
   });
 
   it('maps missing binary to exit 127 via child error path', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: '/path/does/not/exist/agent-bin-xyz',
-      args: [],
+      command: { kind: 'list_models' },
       timeoutMs: 1000,
       maxOutputBytes: 1024,
     });
@@ -100,10 +95,13 @@ describe('AgentCliExecutor', () => {
   });
 
   it('keeps stdout and stderr independent', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     const r = await ex.run({
       binary: node,
-      args: ['-e', 'process.stdout.write("A"); process.stderr.write("B")'],
+      command: {
+        kind: 'host_node_eval',
+        script: 'process.stdout.write("A"); process.stderr.write("B")',
+      },
       timeoutMs: 5000,
       maxOutputBytes: 4096,
     });
@@ -112,7 +110,7 @@ describe('AgentCliExecutor', () => {
   });
 
   it('shutdown completes without throwing when idle', async () => {
-    const ex = new AgentCliExecutor(tinyConfig);
+    const ex = new AgentCliExecutor();
     await expect(ex.shutdown()).resolves.toBeUndefined();
   });
 });

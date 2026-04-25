@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { buildAgentStatusArgs } from '../adapters/agentCli/argBuilder.js';
 import type { PipelineContext } from '../pipeline/toolPipeline.js';
-import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
 
@@ -25,14 +23,18 @@ export function createAgentStatusDescriptor(
     ) => {
       const result = await executor.run({
         binary: toolCtx.agentBinaryPath,
-        args: buildAgentStatusArgs(),
+        command: { kind: 'agent_status' },
         timeoutMs: toolCtx.agentTimeoutMs,
         maxOutputBytes: toolCtx.maxOutputBytes,
       });
 
-      if (result.timedOut || result.exitCode === 127) {
-        const r: ExecutorResult = result;
-        return r;
+      if (result.timedOut) {
+        // Let pipeline map this to TIMEOUT.
+        return result;
+      }
+      if (result.exitCode === 127) {
+        // Let pipeline map this to BINARY_NOT_FOUND.
+        return result;
       }
 
       const stdout = result.stdout.trim();

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { buildSessionResumeArgs } from '../adapters/agentCli/argBuilder.js';
 import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
@@ -15,7 +14,7 @@ export const sessionResumeSchema = z.object({
   prompt: z.string().min(1).max(32_000),
   model: z
     .string()
-    .regex(/^[\w./:-]+$/)
+    .regex(/^[\w.-]+(\/[\w.-]+)?$/)
     .max(200)
     .optional(),
   output_format: z.enum(['text', 'json']).optional().default('text'),
@@ -28,6 +27,7 @@ export function createSessionResumeDescriptor(
 ): ToolDescriptor<SessionResumeParsed> {
   return {
     name: 'session_resume',
+    supportsStreaming: true,
     description:
       'Resume an existing agent chat session with an additional prompt (`agent -p … --resume <chatId>`). ' +
       'Note: combining --resume with --print is not explicitly documented by Cursor — ' +
@@ -39,12 +39,6 @@ export function createSessionResumeDescriptor(
       executor: IAgentExecutor,
       toolCtx: PipelineContext,
     ) => {
-      const args = buildSessionResumeArgs({
-        prompt: input.prompt,
-        sessionId: input.session_id,
-        model: input.model,
-        output_format: input.output_format,
-      });
       const onStdoutChunk =
         toolCtx.sendNotification !== undefined
           ? (chunk: string): void => {
@@ -53,7 +47,13 @@ export function createSessionResumeDescriptor(
           : undefined;
       return await executor.run({
         binary: toolCtx.agentBinaryPath,
-        args,
+        command: {
+          kind: 'session_resume',
+          prompt: input.prompt,
+          sessionId: input.session_id,
+          model: input.model,
+          outputFormat: input.output_format,
+        },
         timeoutMs: toolCtx.agentTimeoutMs,
         maxOutputBytes: toolCtx.maxOutputBytes,
         onStdoutChunk,

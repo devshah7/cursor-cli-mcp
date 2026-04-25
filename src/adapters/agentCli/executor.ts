@@ -1,7 +1,13 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import type { Config } from '../../config.js';
 import type { IAgentExecutor } from '../../ports/agentExecutor.js';
-import type { ExecutorOptions, ExecutorResult } from '../../ports/executorTypes.js';
+import type { AgentCommand, ExecutorOptions, ExecutorResult } from '../../ports/executorTypes.js';
+import {
+  buildAgentStatusArgs,
+  buildListModelsArgs,
+  buildRunAgentArgs,
+  buildSessionCreateArgs,
+  buildSessionResumeArgs,
+} from './argBuilder.js';
 import { RingBuffer } from './ringBuffer.js';
 
 const STDERR_CAP = 2048;
@@ -16,18 +22,48 @@ function stderrExcerpt(buf: RingBuffer): string {
 
 const tracked = new Set<ChildProcess>();
 
-export class AgentCliExecutor implements IAgentExecutor {
-  constructor(config: Pick<Config, 'agentBinaryPath' | 'agentTimeoutMs' | 'maxOutputBytes'>) {
-    void config;
+function argvForCommand(command: AgentCommand): string[] {
+  switch (command.kind) {
+    case 'host_node_eval':
+      return ['-e', command.script];
+    case 'run_agent':
+      return buildRunAgentArgs({
+        prompt: command.prompt,
+        model: command.model,
+        mode: command.mode,
+        workspace: command.workspace,
+        worktree: command.worktree,
+        sandbox: command.sandbox,
+        output_format: command.outputFormat,
+        approve_mcps: command.approveMcps,
+      });
+    case 'list_models':
+      return buildListModelsArgs();
+    case 'agent_status':
+      return buildAgentStatusArgs();
+    case 'session_create':
+      return buildSessionCreateArgs(command.workspace);
+    case 'session_resume':
+      return buildSessionResumeArgs({
+        prompt: command.prompt,
+        sessionId: command.sessionId,
+        model: command.model,
+        output_format: command.outputFormat,
+      });
   }
+}
+
+export class AgentCliExecutor implements IAgentExecutor {
+  constructor() {}
 
   async run(options: ExecutorOptions): Promise<ExecutorResult> {
     const started = Date.now();
     const stdoutBuf = new RingBuffer(options.maxOutputBytes);
     const stderrBuf = new RingBuffer(STDERR_CAP);
+    const args = argvForCommand(options.command);
 
     return await new Promise((resolve) => {
-      const child = spawn(options.binary, options.args, {
+      const child = spawn(options.binary, args, {
         shell: false,
         stdio: ['ignore', 'pipe', 'pipe'],
       });

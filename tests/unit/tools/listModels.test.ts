@@ -16,6 +16,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
   return {
     agentBinaryPath: '/usr/local/bin/agent',
     agentTimeoutMs: 5000,
+    sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
     workspaceAllowlist: [],
     logLevel: 'info',
@@ -31,7 +32,18 @@ describe('parseModelsStdout', () => {
   });
 
   it('falls back to non-empty lines', () => {
-    expect(parseModelsStdout('one\ntwo\n')).toEqual(['one', 'two']);
+    expect(parseModelsStdout('one - One\ntwo - Two\n')).toEqual(['one', 'two']);
+  });
+
+  it('strips header/footer from observed line-based output', () => {
+    const raw = [
+      'Available models',
+      'claude-4-sonnet - Claude 4 Sonnet',
+      'openai/gpt-4o - OpenAI GPT-4o',
+      'gpt-5.4-high - GPT 5.4 High',
+      'Tip: use --model <id> (or /model <id> in interactive mode) to switch.',
+    ].join('\n');
+    expect(parseModelsStdout(raw)).toEqual(['claude-4-sonnet', 'openai/gpt-4o', 'gpt-5.4-high']);
   });
 });
 

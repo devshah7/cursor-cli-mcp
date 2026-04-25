@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { buildListModelsArgs } from '../adapters/agentCli/argBuilder.js';
 import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
@@ -34,6 +33,11 @@ export function parseModelsStdout(stdout: string): string[] {
   return t
     .split(/\r?\n/)
     .map((s) => s.trim())
+    .filter(
+      (s) =>
+        s.length > 0 && s.includes(' - ') && !s.startsWith('Available') && !s.startsWith('Tip:'),
+    )
+    .map((s) => s.split(' - ')[0]?.trim() ?? '')
     .filter((s) => s.length > 0);
 }
 
@@ -52,7 +56,7 @@ export function createListModelsDescriptor(
     ) => {
       const result = await executor.run({
         binary: toolCtx.agentBinaryPath,
-        args: buildListModelsArgs(),
+        command: { kind: 'list_models' },
         timeoutMs: toolCtx.agentTimeoutMs,
         maxOutputBytes: toolCtx.maxOutputBytes,
       });

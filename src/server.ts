@@ -5,6 +5,7 @@ import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sd
 import type { Config } from './config.js';
 import type { IAgentExecutor } from './ports/agentExecutor.js';
 import { wrapTool, type PipelineContext } from './pipeline/toolPipeline.js';
+import { createLogger } from './logger.js';
 import { registerPromptHandlers } from './registry/prompts.js';
 import { ALL_RESOURCES } from './registry/resources.js';
 import { buildToolDescriptors } from './registry/tools.js';
@@ -17,6 +18,8 @@ export function startServer(executor: IAgentExecutor, config: Config): void {
 }
 
 async function connectServer(executor: IAgentExecutor, config: Config): Promise<void> {
+  const logger = createLogger(config);
+
   const mcp = new McpServer(
     {
       name: 'cursor-cli-mcp',
@@ -34,7 +37,9 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     workspaceAllowlist: config.workspaceAllowlist,
     agentBinaryPath: config.agentBinaryPath,
     agentTimeoutMs: config.agentTimeoutMs,
+    sessionCreateTimeoutMs: config.sessionCreateTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
+    logger,
   };
 
   for (const tool of buildToolDescriptors(config)) {
@@ -43,7 +48,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
       tool.name,
       { description: tool.description, inputSchema: tool.schema },
       async (args, extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => {
-        if (tool.name !== 'run_agent') {
+        if (!tool.supportsStreaming) {
           return handler(args);
         }
         const sendNotification = (chunk: string): void => {
@@ -51,7 +56,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
             .sendLoggingMessage(
               {
                 level: 'debug',
-                logger: 'cursor-cli-mcp.run_agent.stdout',
+                logger: `cursor-cli-mcp.${tool.name}.stdout`,
                 data: { chunk },
               },
               extra.sessionId,

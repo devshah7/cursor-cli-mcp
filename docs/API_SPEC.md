@@ -158,40 +158,9 @@ z.object({})  // no inputs
 
 ---
 
-### 3.3 `session_list` (FR-M3) — Gated
+### 3.3 `session_list` (FR-M3) — **CANCELLED**
 
-Lists prior agent sessions/chats.
-
-**Gate condition:** SESSION_GATE: FAIL for original `agent session list` design. Redesigned around `agent ls` — confirmed available from live binary (2026-04-22). Implement using `agent ls`.
-
-**Input Schema:**
-
-```typescript
-z.object({
-  limit: z.number().int().min(1).max(100).optional().default(20),
-})
-```
-
-**CLI invocation:** `agent ls`
-- argBuilder: `buildSessionListArgs()` → `['ls']`
-- Parse stdout for session list; exact output format TBD from running `agent ls` with authenticated binary.
-
-**Success Response:**
-
-```typescript
-{
-  content: [{
-    type: "text",
-    text: JSON.stringify({
-      sessions: Array<{
-        id: string;
-        createdAt: string;  // ISO timestamp if available
-        title?: string;
-      }>
-    })
-  }]
-}
-```
+There is **no** `session_list` MCP tool in this server. Cursor’s `agent ls` is an interactive TUI only — it does not produce machine-readable stdout suitable for MCP. Do not implement or document a live `session_list` contract here.
 
 ---
 
@@ -209,8 +178,8 @@ z.object({
 })
 ```
 
-**CLI invocation:** `agent create-chat`
-- argBuilder: `buildSessionCreateArgs()` → `['create-chat']`
+**CLI invocation:** `agent create-chat` (non-interactive)
+- argBuilder: `buildSessionCreateArgs(workspace?)` → `['create-chat']`, plus `['--workspace', '<path>']` when `workspace` is provided (path allowlist enforced before spawn).
 - Parse stdout for chat ID (expected: single line or JSON with the ID).
 
 **Success Response:**
@@ -378,6 +347,16 @@ unexpected JS exception (not spawn ENOENT)?
 }
 ```
 
+### 7.1 Environment variables (operator reference)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AGENT_BINARY_PATH` | Platform default | Absolute path to the `cursor-agent` binary |
+| `AGENT_TIMEOUT_MS` | `120000` | Default subprocess timeout for most tools (ms) |
+| `SESSION_CREATE_TIMEOUT_MS` | `10000` | Timeout for `session_create` / `create-chat` only (ms) |
+| `MAX_OUTPUT_BYTES` | `524288` | Ring buffer cap for captured stdout |
+| `WORKSPACE_ALLOWLIST` | `""` | Colon-separated allowed workspace paths |
+
 Example `mcp.json` entry for Claude Desktop:
 
 ```json
@@ -387,9 +366,10 @@ Example `mcp.json` entry for Claude Desktop:
       "command": "node",
       "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
       "env": {
-        "AGENT_BINARY_PATH": "/usr/local/bin/agent",
+        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
         "WORKSPACE_ALLOWLIST": "/Users/you/projects:/Users/you/work",
         "AGENT_TIMEOUT_MS": "120000",
+        "SESSION_CREATE_TIMEOUT_MS": "10000",
         "MAX_OUTPUT_BYTES": "524288"
       }
     }

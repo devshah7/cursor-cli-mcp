@@ -16,6 +16,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
   return {
     agentBinaryPath: '/usr/local/bin/agent',
     agentTimeoutMs: 5000,
+    sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
     workspaceAllowlist: [],
     logLevel: 'info',
@@ -99,5 +100,22 @@ describe('agent_status tool', () => {
     const wrapped = wrapTool(createAgentStatusDescriptor(pctx), executor, pctx);
     const out = await wrapped({});
     expect(JSON.parse(getText(out)).binaryPath).toBe('/opt/agent');
+  });
+
+  it('timeout returns TIMEOUT StructuredError', async () => {
+    const executor = new MockExecutor(async () =>
+      Promise.resolve({
+        stdout: '',
+        stderrExcerpt: '',
+        exitCode: 124,
+        timedOut: true,
+        outputTruncated: false,
+        durationMs: 1000,
+      }),
+    );
+    const wrapped = wrapTool(createAgentStatusDescriptor(ctx), executor, ctx);
+    const out = await wrapped({});
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('TIMEOUT');
   });
 });

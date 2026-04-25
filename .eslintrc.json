@@ -32,5 +32,23 @@
       }
     ]
   },
+  "overrides": [
+    {
+      "files": ["src/tools/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/adapters/**"],
+                "message": "tools/ must not import from adapters/ — use ports/ only (see ARCHITECTURE.md)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
   "ignorePatterns": ["dist/", "node_modules/"]
 }

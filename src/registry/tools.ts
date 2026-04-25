@@ -14,6 +14,12 @@ export interface ToolDescriptor<T = unknown> {
   schema: z.ZodType<T>;
   pathArgs: (input: T) => string[];
   handler: (input: T, executor: IAgentExecutor, ctx: PipelineContext) => Promise<unknown>;
+  /**
+   * When true, the server wires up per-chunk stdout notifications for this tool
+   * (MCP logging messages at `debug` level). Only set this on tools that stream
+   * incremental output — it triggers the `sendNotification` path in the pipeline.
+   */
+  supportsStreaming?: boolean;
 }
 
 export function pipelineContextFromConfig(config: Config): PipelineContext {
@@ -21,6 +27,7 @@ export function pipelineContextFromConfig(config: Config): PipelineContext {
     workspaceAllowlist: config.workspaceAllowlist,
     agentBinaryPath: config.agentBinaryPath,
     agentTimeoutMs: config.agentTimeoutMs,
+    sessionCreateTimeoutMs: config.sessionCreateTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
   };
 }

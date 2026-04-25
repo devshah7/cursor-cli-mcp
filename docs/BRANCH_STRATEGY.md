@@ -1,6 +1,6 @@
 # Branch Strategy: cursor-cli-mcp
 
-**Last updated:** 2026-04-22  
+**Last updated:** 2026-04-23  
 **Status:** Authoritative — all agents and contributors must follow this exactly.
 
 ---
@@ -122,8 +122,37 @@ Key constraints:
 
 ---
 
-## 7. Version History
+## 7. Active Phase 5 Branches
+
+All branches below are cut from `dev` and PR back to `dev`. They are **PARALLEL** — no ordering dependency between them. When all are merged to `dev` and the Phase 5 gate passes, open a single release PR `dev → main` titled `release: v1.1`.
+
+| Branch | Scope | Key files touched |
+|--------|-------|------------------|
+| `fix/executor-config-discard` | T5.1 — remove `void config` from constructor | `adapters/agentCli/executor.ts` |
+| `fix/session-create-hardening` | T5.2–T5.4 — dedicated timeout + workspace forwarding | `config.ts`, `tools/sessionCreate.ts`, `adapters/agentCli/argBuilder.ts` |
+| `fix/model-regex` | T5.5 — tighten model regex to block traversal chars | `tools/runAgent.ts`, `tools/sessionResume.ts` |
+| `fix/agent-status-error-shape` | T5.6 — consistent StructuredError on timeout/ENOENT | `tools/agentStatus.ts` |
+| `fix/list-models-parsing` | T5.7 — strip header/footer from model list | `tools/listModels.ts` |
+| `fix/binary-path-defaults` | T5.8 — use `cursor-agent` binary name in defaults | `config.ts` |
+| `chore/config-validation` | T5.9 — min 1024 on `maxOutputBytes` | `config.ts` |
+
+### Starting a Phase 5 branch
+
+```bash
+git checkout dev
+git pull origin dev
+git checkout -b fix/<description>
+```
+
+### Phase 5 PR rules
+
+Same as all PRs — checklist required, base branch is `dev`, CI must be green. See section 4.
+
+---
+
+## 8. Version History
 
 | Version | Branch | Notes |
 |---------|--------|-------|
 | v1.0 | `main` | Phases 0–4 complete. Tools: `run_agent`, `list_models`, `agent_status`, `session_create`, `session_resume`. Resources + prompts. Streaming. Security hardening. |
+| v1.1 | `dev → main` | Phase 5 in progress. Bug fixes: executor constructor, session timeout, model regex, error shapes, model list parsing, binary path defaults, config validation. |

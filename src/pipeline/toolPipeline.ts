@@ -1,6 +1,7 @@
 import { ZodError } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { ErrorClass, buildError, type StructuredError } from '../errors.js';
+import type { Logger } from '../logger.js';
 import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
@@ -11,9 +12,12 @@ export interface PipelineContext {
   workspaceAllowlist: string[];
   agentBinaryPath: string;
   agentTimeoutMs: number;
+  sessionCreateTimeoutMs: number;
   maxOutputBytes: number;
   /** Phase 4 streaming — forward `run_agent` stdout chunks to MCP client; undefined = aggregated-only. */
   sendNotification?: (chunk: string) => void;
+  /** Optional logger for pipeline-level diagnostics (e.g. workspace bypass warning). */
+  logger?: Logger;
 }
 
 function authLike(stderr: string): boolean {
@@ -120,7 +124,17 @@ export function wrapTool<T>(
     try {
       const merged: PipelineContext = { ...ctx, ...(ctxOverrides ?? {}) };
       const parsed = descriptor.schema.parse(args);
-      validatePaths(descriptor.pathArgs(parsed), merged.workspaceAllowlist);
+      const pathArgs = descriptor.pathArgs(parsed);
+      validatePaths(pathArgs, merged.workspaceAllowlist);
+      // Warn when WORKSPACE_ALLOWLIST is configured but this tool invocation supplies no
+      // path arguments — the agent will run outside any allowlisted directory and the
+      // server cannot verify it stays in an approved workspace.
+      if (merged.workspaceAllowlist.length > 0 && pathArgs.length === 0) {
+        merged.logger?.warn(
+          'workspace-bypass: WORKSPACE_ALLOWLIST is set but no workspace path was supplied — agent will run without workspace path validation',
+          { tool: descriptor.name, allowlist: merged.workspaceAllowlist },
+        );
+      }
       const raw = await descriptor.handler(parsed, executor, merged);
       if (isExecutorResult(raw)) {
         return mapExecutorOutcome(raw);

@@ -37,15 +37,15 @@ Do not write code until you have read all five documents.
 
 ## Project State
 
-- **Current version:** v1.0 — all phases (0–4) complete and merged to `main`
+- **Current version:** v1.1 fixes are merged on `dev`; release promotion is a `dev → main` PR when ready. **v1.2** work is Phase 6 (post-audit) — see `docs/TASK_LIST.md`.
 - **Branch model:** `main` = production; `dev` = integration; all work branches off `dev` and PRs back to `dev`; release PRs promote `dev` → `main`
-- **Active branches:** See `docs/BRANCH_STRATEGY.md`
+- **Phase 5 branches:** merged to `dev` via PRs (see repo history / `docs/TASK_LIST.md` Phase 5 checkboxes). Further hardening is tracked under Phase 6.
 - **MCP tools live:** `run_agent`, `list_models`, `agent_status`, `session_create`, `session_resume` — all tested against real binary
 - **Known CLI behaviours (confirmed 2026-04-22):**
   - `--trust` is always passed by the server (WORKSPACE_ALLOWLIST is the real security gate)
   - `--max-turns` does not exist in this CLI version — removed from schema
   - `agent ls` is a TUI only — `session_list` tool was removed; no headless session listing available
-  - `agent create-chat` may hang after printing ID — executor timeout is the safety net
+  - `agent create-chat` may hang after printing ID — dedicated `SESSION_CREATE_TIMEOUT_MS` (default 10s) is the safety net (v1.1 fix)
   - `--sandbox` takes a value: `enabled` or `disabled` (not a bare boolean flag)
 
 ---

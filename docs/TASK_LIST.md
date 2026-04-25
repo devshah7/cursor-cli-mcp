@@ -1,6 +1,6 @@
 # Task List: cursor-cli-mcp
 
-**Last updated:** 2026-04-22  
+**Last updated:** 2026-04-24  
 **How to use:** Agents read this file to identify their task. Mark `[ ]` → `[x]` when complete. Add completion date.
 
 ---
@@ -307,6 +307,301 @@
 - [x] Streaming first-chunk < 2s _(2026-04-22 — executor emits onStdoutChunk per chunk)_
 - [x] CI green _(2026-04-22)_
 - [x] README complete with mcp.json example and operator setup instructions _(2026-04-22 — PR #16)_
+
+---
+
+## Phase 5 — Bug Fixes & Hardening
+
+**Merge requirement:** All Phase 4 branches merged to main (v1.0 shipped). ✓  
+**Source:** Bugs confirmed in post-release audit (issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21)) and live MCP tool test run (2026-04-23).  
+**Target:** All branches cut from `dev`, PR back to `dev`. Release PR `dev → main` = v1.1.
+
+All Phase 5 branches are **PARALLEL** with each other unless noted.
+
+---
+
+### `fix/executor-config-discard` — PARALLEL
+
+**Files in scope:** `src/adapters/agentCli/executor.ts`, `tests/unit/adapters/executor.test.ts`
+
+- [x] **T5.1** — Fix `AgentCliExecutor` constructor: line 21 contains `void config` which silently discards all injected values (`agentBinaryPath`, `agentTimeoutMs`, `maxOutputBytes`). Two valid fixes — pick one and document the choice in a comment:
+  - Option A (preferred): remove the constructor param entirely and always read values from `ExecutorOptions` per-call (current implicit behaviour — make it explicit by deleting the dead param).
+  - Option B: store `config` on the instance as a fallback when `ExecutorOptions` fields are missing.
+  - Update or add a unit test that confirms injecting a config with a custom `agentBinaryPath` does not silently discard it.
+  - Acceptance: `void config` line gone; typecheck passes; executor tests pass. _(2026-04-24)_
+
+---
+
+### `fix/session-create-hardening` — PARALLEL
+
+**Files in scope:** `src/config.ts`, `src/tools/sessionCreate.ts`, `src/adapters/agentCli/argBuilder.ts`, `tests/unit/tools/sessionCreate.test.ts`, `tests/unit/adapters/argBuilder.test.ts`
+
+- [x] **T5.2** — Add `SESSION_CREATE_TIMEOUT_MS` to `src/config.ts`:
+  - Parse new env var with `parsePositiveInt`, default `10_000`.
+  - Add `sessionCreateTimeoutMs: number` to `Config` interface.
+  - Add `sessionCreateTimeoutMs: number` to `PipelineContext` in `src/pipeline/toolPipeline.ts`.
+  - Wire it through `src/index.ts` composition root.
+  - Update `src/server.ts` if `PipelineContext` is constructed there.
+  - Acceptance: `SESSION_CREATE_TIMEOUT_MS=5000 node dist/index.js` starts without error; config unit test for new var passes. _(2026-04-24)_
+
+- [x] **T5.3** — Use `sessionCreateTimeoutMs` in `sessionCreate.ts` handler:
+  - Line 82: replace `timeoutMs: toolCtx.agentTimeoutMs` with `timeoutMs: toolCtx.sessionCreateTimeoutMs`.
+  - Add unit test: mock a slow executor (timedOut: true) and assert the tool returns a TIMEOUT error, not a 2-minute hang.
+  - Acceptance: handler uses the new timeout; test passes; typecheck passes. _(2026-04-24)_
+
+- [x] **T5.4** — Fix `workspace` forwarding for `session_create`:
+  - `src/adapters/agentCli/argBuilder.ts`: change `buildSessionCreateArgs()` signature to `buildSessionCreateArgs(workspace?: string): string[]`; append `['--workspace', workspace]` when provided.
+  - `src/tools/sessionCreate.ts`: pass `input.workspace` to `buildSessionCreateArgs()`.
+  - Add argBuilder unit test: `buildSessionCreateArgs('/tmp/test')` includes `['--workspace', '/tmp/test']`; `buildSessionCreateArgs()` omits the flag.
+  - Acceptance: argBuilder test passes; workspace appears in CLI args when provided; typecheck passes. _(2026-04-24)_
+
+---
+
+### `fix/model-regex` — PARALLEL
+
+**Files in scope:** `src/tools/runAgent.ts`, `src/tools/sessionResume.ts`, `tests/unit/tools/runAgent.test.ts`, `tests/unit/tools/sessionResume.test.ts`
+
+- [x] **T5.5** — Tighten the `model` Zod regex to block path traversal characters:
+  - Current pattern: `/^[\w./:-]+$/` — allows `/` and `:` which permit strings like `../../etc/passwd`.
+  - Required pattern: `/^[\w.-]+(\/[\w.-]+)?$/` — covers real model IDs (`claude-4-sonnet`, `openai/gpt-4o`, `gpt-5.4-high`) while blocking bare traversal sequences.
+  - Change the regex in both `runAgent.ts` and `sessionResume.ts` (both have identical schemas — update both).
+  - Add unit tests: `../../etc/passwd` → Zod rejection; `claude-4-sonnet` → passes; `openai/gpt-4o` → passes; `gpt-5.4-high` → passes.
+  - Acceptance: new regex in both files; unit tests pass; typecheck passes. _(2026-04-24)_
+
+---
+
+### `fix/agent-status-error-shape` — PARALLEL
+
+**Files in scope:** `src/tools/agentStatus.ts`, `tests/unit/tools/agentStatus.test.ts`
+
+- [x] **T5.6** — Ensure `agent_status` returns a `StructuredError` (not raw `ExecutorResult`) on timeout or exit 127:
+  - Currently the handler returns `r: ExecutorResult` directly on `result.timedOut || result.exitCode !== 0` — this bypasses `classifyExecutorFailure` and breaks the consistent error contract.
+  - Fix: let the normal pipeline error-mapping path handle these cases. The tool handler should only handle the happy path and the `authenticated: false` non-error case (exit non-zero from a found binary). Timeout and ENOENT should propagate as they do for other tools.
+  - Verify existing 4 agentStatus tests still pass and add a test for the timeout case returning a TIMEOUT `StructuredError`.
+  - Acceptance: timeout → `{ errorClass: "TIMEOUT", ... }`; ENOENT → `{ errorClass: "BINARY_NOT_FOUND", ... }`; exit non-zero (binary present) → `{ authenticated: false }` success; all 5+ tests pass. _(2026-04-24)_
+
+---
+
+### `fix/list-models-parsing` — PARALLEL
+
+**Files in scope:** `src/tools/listModels.ts`, `tests/unit/tools/listModels.test.ts`
+
+- [x] **T5.7** — Fix `parseModelsStdout` to strip non-model lines from the CLI's line-based output:
+  - **Observed (live test 2026-04-23):** first element `"Available models"`, last element `"Tip: use --model <id> (or /model <id> in interactive mode) to switch."` — both are header/footer strings, not model IDs.
+  - Fix: after splitting lines, filter out lines that do not match a model entry pattern. A model line contains a ` - ` separator (ID + display name). Strip any line that starts with `"Available"`, starts with `"Tip:"`, or is empty.
+  - Simplest safe filter: `line.includes(' - ')` — all real model lines have the ` - ` separator between ID and display name; header/footer lines do not.
+  - Add unit test with the raw output format observed from the live CLI (include "Available models" header, real model lines, and "Tip:" footer). Assert result contains only ID strings, not header/footer.
+  - Acceptance: `parseModelsStdout` returns clean model IDs only; updated tests pass; old tests still pass. _(2026-04-24)_
+
+---
+
+### `fix/binary-path-defaults` — PARALLEL
+
+**Files in scope:** `src/config.ts`, `tests/unit/config.test.ts`
+
+- [x] **T5.8** — Correct `defaultAgentBinaryPath()` to use `cursor-agent` binary name:
+  - Current defaults reference `agent` binary at `/usr/local/bin/agent` and `/Applications/Cursor.app/.../agent` — the real binary is `cursor-agent`.
+  - Update per confirmed install locations:
+
+  | Platform | Primary | Fallback |
+  |----------|---------|---------|
+  | macOS | `~/.local/bin/cursor-agent` | `/opt/homebrew/bin/cursor-agent` |
+  | Linux | `~/.local/bin/cursor-agent` | `/usr/local/bin/cursor-agent` |
+
+  - Use `os.homedir()` for the `~` expansion (already imported).
+  - Update config unit test for binary path defaults.
+  - Acceptance: `defaultAgentBinaryPath()` returns a path containing `cursor-agent`; typecheck passes. _(2026-04-24)_
+
+---
+
+### `chore/config-validation` — PARALLEL
+
+**Files in scope:** `src/config.ts`, `tests/unit/config.test.ts`
+
+- [x] **T5.9** — Add minimum validation on `maxOutputBytes`:
+  - A value of 0 silently truncates all output via the ring buffer's early-return path — this is a silent data-loss bug, not a recoverable error.
+  - In `parsePositiveInt` or inline in the `maxOutputBytes` parse: throw `ConfigError` if the parsed value is less than `1024`.
+  - Add unit test: `MAX_OUTPUT_BYTES=512` → `ConfigError`; `MAX_OUTPUT_BYTES=1024` → valid.
+  - Acceptance: config throws on values < 1024; test passes; existing config tests still pass. _(2026-04-24)_
+
+---
+
+**Phase 5 Gate (all branches merged to `dev`, pre-v1.1 release):**
+
+- [x] All unit tests pass (target ≥ 95 tests after new test additions) _(2026-04-24 — 104 tests local)_
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24 local)_
+- [x] Live MCP smoke test: `list_models` returns only clean model IDs (no "Available models" or "Tip:" lines) _(2026-04-24 — 95 clean IDs confirmed via live tool test)_
+- [x] Live MCP smoke test: `session_create` completes within 10s (not 120s) _(2026-04-24 — clean UUID returned, no hang)_
+- [x] CI green _(2026-04-24)_
+- [x] Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) resolved and closed _(2026-04-24)_
+
+---
+
+---
+
+## Phase 6 — Post-Audit Fixes & Hardening (v1.2)
+
+**Source:** Full code + docs + test audit conducted 2026-04-24 (live tool tests + 3 parallel audit agents).  
+**Merge requirement:** Phase 5 gate passed, v1.1 shipped to `main`.  
+**Target:** All branches cut from `dev`, PR back to `dev`. Release PR `dev → main` = v1.2.  
+**Audit report:** Consolidated findings logged in session 2026-04-24.
+
+All Phase 6 branches are **PARALLEL** unless noted.
+
+---
+
+### `fix/layer-violation` — PARALLEL 🔴 HIGH PRIORITY
+
+**Files in scope:** `src/adapters/agentCli/executor.ts`, `src/ports/agentExecutor.ts`, `src/ports/executorTypes.ts`, all `src/tools/*.ts`, `tests/unit/adapters/executor.test.ts`, `tests/unit/tools/*.test.ts`
+
+**Finding:** All 5 tool handlers (`runAgent`, `listModels`, `agentStatus`, `sessionCreate`, `sessionResume`) import directly from `src/adapters/agentCli/argBuilder.ts`. This violates the explicit architecture rule: `tools/ → ports/ only, NEVER adapters/`. The ESLint config has no rule catching this so it silently slips through.
+
+- [x] **T6.1** — Eliminate tools → adapters import chain by moving arg-building responsibility into the executor layer:
+  - Define a discriminated union `AgentCommand` in `src/ports/executorTypes.ts` covering all CLI operations: `RunAgent`, `ListModels`, `AgentStatus`, `SessionCreate`, `SessionResume`. Each variant carries only the semantic inputs (prompt, model, workspace, etc.) — no CLI flag strings.
+  - Update `IAgentExecutor.run()` in `src/ports/agentExecutor.ts` to accept `AgentCommand` instead of raw `args: string[]`.
+  - Move all `buildXxxArgs()` calls inside `AgentCliExecutor.run()` in `src/adapters/agentCli/executor.ts` — the adapter resolves the command variant and calls argBuilder internally. argBuilder stays unchanged.
+  - Update all tool handlers to construct the appropriate `AgentCommand` variant and pass it to `executor.run()`. Remove all `import ... from adapters/` lines from `src/tools/`.
+  - Update all affected unit tests: tool tests construct `AgentCommand` objects; executor tests receive `AgentCommand` objects.
+  - Acceptance: zero imports from `adapters/` in any `src/tools/*.ts` file; `npm run typecheck && npm run lint && npm run test:unit` all exit 0. _(2026-04-24)_
+
+---
+
+### `fix/session-resume-streaming` — PARALLEL 🟡 MEDIUM
+
+**Files in scope:** `src/tools/sessionResume.ts`, `tests/unit/tools/sessionResume.test.ts`
+
+**Finding:** `sessionResume.ts` uses `toolCtx.sendNotification` in its handler but the descriptor does not set `supportsStreaming: true`. Since `server.ts` only wires the notification callback when `tool.supportsStreaming === true`, `sendNotification` is always `undefined` at runtime — the streaming code path is silently dead.
+
+- [x] **T6.2** — Add `supportsStreaming: true` to `createSessionResumeDescriptor` return value:
+  - Mirror the pattern already used in `createRunAgentDescriptor` (line 44 of `runAgent.ts`).
+  - Add a unit test asserting `createSessionResumeDescriptor(ctx).supportsStreaming === true`.
+  - Acceptance: `supportsStreaming: true` present on descriptor; streaming test passes; live `session_resume` call emits MCP logging chunks; all existing tests pass. _(2026-04-24)_
+
+---
+
+### `chore/docs-sync` — PARALLEL 🟡 MEDIUM
+
+**Files in scope:** `README.md`, `docs/API_SPEC.md`, `docs/ARCHITECTURE.md`, `CLAUDE.md`
+
+**Finding:** Multiple outdated and missing documentation items identified across 4 files.
+
+- [x] **T6.3** — Fix `README.md` outdated items:
+  - Binary path table: replace `agent` binary name with `cursor-agent` throughout.
+  - `session_create` known-behaviour note: replace reference to `AGENT_TIMEOUT_MS` with `SESSION_CREATE_TIMEOUT_MS` (default 10s, not 120s).
+  - Env vars table: add `SESSION_CREATE_TIMEOUT_MS` row (`10000` default, description: "Milliseconds before session_create subprocess is killed — prevents create-chat hang").
+  - MCP server config example: add `SESSION_CREATE_TIMEOUT_MS` to the example env block.
+  - Acceptance: all four items corrected; no mention of bare `agent` binary name in path tables. _(2026-04-24)_
+
+- [x] **T6.4** — Fix `docs/API_SPEC.md` outdated and missing items:
+  - Remove `session_list` tool section (or replace with a clearly marked `CANCELLED` notice explaining `agent ls` is TUI-only).
+  - Add `SESSION_CREATE_TIMEOUT_MS` to the environment variables reference table.
+  - Update `session_create` CLI invocation description to document that `workspace` is forwarded as `--workspace <path>` to the binary.
+  - Acceptance: no live documentation of a cancelled tool; all three items addressed; typecheck / build unaffected. _(2026-04-24)_
+
+- [x] **T6.5** — Fix `docs/ARCHITECTURE.md` outdated and missing items:
+  - Module directory structure: correct session tool paths from `src/tools/sessions/` (empty stub directory) to `src/tools/sessionCreate.ts` / `src/tools/sessionResume.ts` at the tools root.
+  - Module table: add `src/ports/executorTypes.ts` as a Ports layer entry (currently listed by tests and adapters but absent from the table).
+  - Add `SESSION_CREATE_TIMEOUT_MS` to the Config interface documentation in section 4.8.
+  - Acceptance: directory structure in doc matches actual filesystem; all three items addressed. _(2026-04-24)_
+
+- [x] **T6.6** — Update `CLAUDE.md` Project State section:
+  - Change Phase 5 active branches from listed as "ACTIVE" to noting they are merged to `dev` (PRs #23–#31).
+  - Update current version state: v1.1 in progress → v1.1 shipped to dev, pending `dev → main` release PR.
+  - Acceptance: Project State section accurately reflects post-audit current state. _(2026-04-24)_
+
+---
+
+### `chore/test-coverage` — PARALLEL 🟢 LOW
+
+**Files in scope:** `tests/unit/errors.test.ts` (new), `tests/unit/registry/tools.test.ts` (new), `tests/unit/tools/sessionCreate.test.ts`
+
+**Finding:** Three source modules have zero test coverage; one existing test covers only the rejection path for a fix, not the positive case.
+
+- [x] **T6.7** — Create `tests/unit/errors.test.ts`:
+  - Assert all `ErrorClass` enum values exist and match the string literals in API_SPEC.md section 2.1 (`VALIDATION`, `SECURITY`, `TIMEOUT`, `BINARY_NOT_FOUND`, `AUTH_REQUIRED`, `AGENT_ERROR`, `UNKNOWN`).
+  - Assert `buildError(ErrorClass.TIMEOUT, 'msg', { timedOut: true })` returns an object with `errorClass`, `message`, and the extra field.
+  - Assert `buildError` without extras returns an object without extra keys.
+  - Acceptance: new test file passes; `npm run test:unit` total count increases by ≥ 3. _(2026-04-24)_
+
+- [x] **T6.8** — Create `tests/unit/registry/tools.test.ts`:
+  - Assert `buildToolDescriptors(config)` returns exactly 5 descriptors.
+  - Assert each expected tool name is present: `run_agent`, `list_models`, `agent_status`, `session_create`, `session_resume`.
+  - Assert `run_agent` descriptor has `supportsStreaming: true`.
+  - Acceptance: new test file passes; catches any accidental tool omission in the registry. _(2026-04-24)_
+
+- [x] **T6.9** — Strengthen `session_create` workspace forwarding test in `tests/unit/tools/sessionCreate.test.ts`:
+  - Current test only asserts SECURITY rejection when workspace is outside allowlist (negative case).
+  - Add a positive test: capture the args array received by the mock executor when `workspace` is provided within the allowlist; assert `--workspace` and the path appear in the args.
+  - Acceptance: positive forwarding test passes; confirms T5.4 fix is exercised end-to-end through the tool handler. _(2026-04-24)_
+
+---
+
+### `chore/eslint-layer-rule` — PARALLEL 🟢 LOW
+
+**Files in scope:** `.eslintrc.json`, `tests/unit/` (verify no new violations)
+
+**Finding:** The ESLint config has no rule preventing `tools/` from importing `adapters/`. The architecture violation (T6.1) existed undetected because linting has no enforcement for it.
+
+- [x] **T6.10** — Add an ESLint `no-restricted-imports` rule to `.eslintrc.json` that bans imports matching `**/adapters/**` from files matching `src/tools/**`:
+  - Use the `overrides` array to scope the rule to `src/tools/*.ts` only.
+  - Add a clear `message` on the rule: `"tools/ must not import from adapters/ — use ports/ only (see ARCHITECTURE.md)"`.
+  - Verify `npm run lint` exits non-zero if a tool file imports from adapters (test manually or add a lint-only fixture).
+  - Acceptance: rule present in config; `npm run lint` catches any future tools→adapters imports; existing tools pass lint after T6.1 removes the violations. _(2026-04-24)_
+
+---
+
+### `fix/streaming-guard` — PARALLEL 🟡 MEDIUM
+
+**Files in scope:** `tests/unit/registry/tools.test.ts`, `docs/AGENT_RULES.md`
+
+**Source:** Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) comment 2026-04-24 — item #8.
+
+**Finding:** The `supportsStreaming` flag is partially enforced. `run_agent` sets it and the registry test verifies it. However:
+1. `session_resume` (fixed in T6.2) also has the flag set but the registry test does not assert it — a regression would go unnoticed.
+2. There is no automated guard preventing a future tool from calling `toolCtx.sendNotification` in its handler without setting `supportsStreaming: true` on its descriptor. If that happens, the streaming code path is silently dead (exactly the bug T6.2 fixed).
+
+- [x] **T6.11** — Extend `tests/unit/registry/tools.test.ts` to assert `supportsStreaming` for all streaming-capable tools:
+  - Add a dedicated test: assert `session_resume` descriptor has `supportsStreaming: true`.
+  - Add a test asserting that ALL descriptors with `supportsStreaming: true` are explicitly listed — effectively a registry snapshot. If a new tool sets the flag without being added to this list (or removes it without updating the list), the test fails.
+  - Add a comment above the list: `// Update this list whenever a tool gains or loses supportsStreaming`.
+  - Acceptance: registry test covers both `run_agent` and `session_resume`; snapshot test catches future flag drift; `npm run test:unit` passes. _(2026-04-24)_
+
+- [x] **T6.12** — Document the `supportsStreaming` contract in `docs/AGENT_RULES.md`:
+  - Add a rule (or extend Rule 13 module boundaries): "Any tool handler that reads `toolCtx.sendNotification` MUST set `supportsStreaming: true` on its descriptor. If the flag is missing, `server.ts` will never inject the callback and the handler's streaming code path will be silently dead."
+  - Add `supportsStreaming flag missing on a streaming handler` to the Forbidden Patterns quick-reference table.
+  - Acceptance: rule documented; future agents have explicit written guidance. _(2026-04-24)_
+
+---
+
+### `fix/max-output-bytes-verify` — PARALLEL 🟢 LOW
+
+**Files in scope:** `docs/TASK_LIST.md`, `tests/unit/config.test.ts`, issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21)
+
+**Source:** Issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) comment 2026-04-24 — item #9.
+
+**Finding:** The issue comment flagged `maxOutputBytes` minimum validation as still open. However, the validation **is already present** in the current `dev` codebase (`config.ts:92-93`: `if (maxOutputBytes < 1024) throw new ConfigError(...)`), and the config test already covers it. The issue comment was written before `chore/config-validation` was merged to `dev`.
+
+- [x] **T6.13** — Confirm and close issue #21 item #9:
+  - Verify `config.ts` on `dev` has `if (maxOutputBytes < 1024) throw new ConfigError(...)` (lines 92–93).
+  - Verify `tests/unit/config.test.ts` has a test asserting `MAX_OUTPUT_BYTES=512` → `ConfigError` and `MAX_OUTPUT_BYTES=1024` → valid.
+  - Post a reply on issue [#21](https://github.com/devshah7/cursor-cli-mcp/issues/21) confirming item #9 is resolved: the validation landed in `chore/config-validation` (PR merged to `dev`); the comment predates that merge.
+  - Mark Phase 5 task T5.9 as `[x]` complete in this file with date.
+  - Acceptance: issue #21 reply posted; T5.9 marked complete; no code change needed. _(2026-04-24)_
+
+---
+
+**Phase 6 Gate (all branches merged to `dev`, pre-v1.2 release):**
+
+- [x] Zero imports from `adapters/` in any `src/tools/*.ts` file (`npm run lint` enforces) _(2026-04-24 — T6.1 + T6.10 merged via PR #32)_
+- [x] `session_resume` streaming wired and tested _(2026-04-24 — T6.2 merged via PR #33)_
+- [x] All documentation items corrected (README, API_SPEC, ARCHITECTURE, CLAUDE.md) _(2026-04-24 — T6.3–T6.6 merged via PR #34)_
+- [x] `supportsStreaming` registry snapshot test covers all streaming tools _(2026-04-24 — T6.11 merged via PR #36)_
+- [x] `supportsStreaming` contract documented in AGENT_RULES.md _(2026-04-24 — T6.12 merged via PR #36)_
+- [x] Issue #21 items #8 and #9 confirmed resolved; issue closed _(2026-04-24 — T6.13 merged via PR #37)_
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24)_
+- [x] `npm run test:unit` passes with ≥ 103 tests _(2026-04-24 — 104 tests)_
+- [x] CI green on `dev` _(2026-04-24)_
+- [ ] v1.2 release PR `dev → main` created
 
 ---
 
