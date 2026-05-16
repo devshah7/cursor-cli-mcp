@@ -10,6 +10,7 @@ export interface Config {
   agentTimeoutMs: number;
   sessionCreateTimeoutMs: number;
   maxOutputBytes: number;
+  promptMaxChars: number;
   workspaceAllowlist: string[];
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   logPrompts: boolean;
@@ -93,6 +94,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new ConfigError('MAX_OUTPUT_BYTES must be >= 1024');
   }
 
+  const promptMaxChars = parsePositiveInt(env.PROMPT_MAX_CHARS, 20_000, 'PROMPT_MAX_CHARS');
+  if (promptMaxChars < 1) {
+    throw new ConfigError('PROMPT_MAX_CHARS must be >= 1');
+  }
+
   const allowRaw = env.WORKSPACE_ALLOWLIST ?? '';
   const workspaceAllowlist =
     allowRaw === ''
@@ -109,6 +115,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     agentTimeoutMs,
     sessionCreateTimeoutMs,
     maxOutputBytes,
+    promptMaxChars,
     workspaceAllowlist,
     logLevel: parseLogLevel(env.LOG_LEVEL),
     logPrompts,

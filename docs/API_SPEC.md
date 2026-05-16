@@ -320,6 +320,9 @@ timedOut === true?
 Zod parse throws ZodError?
   → VALIDATION
 
+prompt.length > promptMaxChars (run_agent only)?
+  → VALIDATION (with promptLength and promptMaxChars fields in error payload)
+
 security.validatePaths() throws?
   → SECURITY
 
@@ -355,6 +358,7 @@ unexpected JS exception (not spawn ENOENT)?
 | `AGENT_TIMEOUT_MS` | `120000` | Default subprocess timeout for most tools (ms) |
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Timeout for `session_create` / `create-chat` only (ms) |
 | `MAX_OUTPUT_BYTES` | `524288` | Ring buffer cap for captured stdout |
+| `PROMPT_MAX_CHARS` | `20000` | Maximum prompt length in characters for `run_agent`; requests exceeding this return `VALIDATION` before spawning a subprocess |
 | `WORKSPACE_ALLOWLIST` | `""` | Colon-separated allowed workspace paths |
 
 Example `mcp.json` entry for Claude Desktop:
@@ -370,7 +374,8 @@ Example `mcp.json` entry for Claude Desktop:
         "WORKSPACE_ALLOWLIST": "/Users/you/projects:/Users/you/work",
         "AGENT_TIMEOUT_MS": "120000",
         "SESSION_CREATE_TIMEOUT_MS": "10000",
-        "MAX_OUTPUT_BYTES": "524288"
+        "MAX_OUTPUT_BYTES": "524288",
+        "PROMPT_MAX_CHARS": "20000"
       }
     }
   }

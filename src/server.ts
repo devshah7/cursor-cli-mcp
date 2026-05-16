@@ -39,6 +39,7 @@ async function connectServer(executor: IAgentExecutor, config: Config): Promise<
     agentTimeoutMs: config.agentTimeoutMs,
     sessionCreateTimeoutMs: config.sessionCreateTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
+    promptMaxChars: config.promptMaxChars,
     logger,
   };
 
