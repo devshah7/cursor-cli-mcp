@@ -670,7 +670,7 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [ ] Oversized prompt returns `VALIDATION` error before subprocess spawn (manual smoke test)
 - [ ] `PROMPT_MAX_CHARS` env var respected at runtime
 - [ ] CI green on `dev`
-- [ ] Issue [#38](https://github.com/devshah7/cursor-cli-mcp/issues/38) closed
+- [x] Issue [#38](https://github.com/devshah7/cursor-cli-mcp/issues/38) closed _(2026-05-16)_
 - [ ] v1.3 release PR `dev → main` created
 
 ---
