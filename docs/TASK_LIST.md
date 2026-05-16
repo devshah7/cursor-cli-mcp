@@ -712,7 +712,7 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
 - [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
 - [x] No "colon-separated" references to `WORKSPACE_ALLOWLIST` in any file _(2026-05-16)_
-- [ ] CI green on `dev`
+- [x] CI green on `dev` _(2026-05-16 — PR #43 merged)_
 
 ---
 
