@@ -33,3 +33,15 @@ export function buildError(
     ...extras,
   };
 }
+
+export class PromptTooLargeError extends Error {
+  constructor(
+    readonly promptLength: number,
+    readonly promptMaxChars: number,
+  ) {
+    super(
+      `Prompt is ${promptLength} characters, which exceeds the ${promptMaxChars}-character limit. Split into smaller tasks or reduce context.`,
+    );
+    this.name = 'PromptTooLargeError';
+  }
+}

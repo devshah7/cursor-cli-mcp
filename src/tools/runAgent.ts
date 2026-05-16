@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PromptTooLargeError } from '../errors.js';
 import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
@@ -42,6 +43,9 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
     pathArgs: pathArgsFromRunAgent,
     supportsStreaming: true,
     handler: async (input: RunAgentParsed, executor: IAgentExecutor, toolCtx: PipelineContext) => {
+      if (input.prompt.length > toolCtx.promptMaxChars) {
+        throw new PromptTooLargeError(input.prompt.length, toolCtx.promptMaxChars);
+      }
       const onStdoutChunk =
         toolCtx.sendNotification !== undefined
           ? (chunk: string): void => {

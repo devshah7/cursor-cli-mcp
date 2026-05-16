@@ -605,6 +605,76 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 ---
 
+## Phase 7 — Prompt Size Guard (v1.3)
+
+**Source:** Issue [#38](https://github.com/devshah7/cursor-cli-mcp/issues/38) — large prompts produce opaque TIMEOUT with no actionable signal.  
+**Branch:** `fix/prompt-size-guard` cut from `dev`; PR back to `dev`. Release PR `dev → main` = v1.3.  
+**Date started:** 2026-05-16  
+**Approach:** Options A + C from issue #38 — pre-flight prompt size guard with configurable `PROMPT_MAX_CHARS` env var. Option B (stdout hint scan on timeout) deferred.
+
+---
+
+### `fix/prompt-size-guard` — single branch
+
+**Files in scope:** `src/config.ts`, `src/pipeline/toolPipeline.ts`, `src/index.ts`, `src/server.ts`, `src/tools/runAgent.ts`, `tests/unit/config.test.ts`, `tests/unit/tools/runAgent.test.ts`, `docs/API_SPEC.md`
+
+- [x] **T7.1** — Add `promptMaxChars` to `src/config.ts`:
+  - Add `promptMaxChars: number` to `Config` interface.
+  - Parse `PROMPT_MAX_CHARS` env var via `parsePositiveInt`, default `20_000`.
+  - Throw `ConfigError` if parsed value is `< 1`.
+  - Return `promptMaxChars` in the `Config` object.
+  - Acceptance: `PROMPT_MAX_CHARS=5000` → `config.promptMaxChars === 5000`; `PROMPT_MAX_CHARS=0` → `ConfigError`; unset → `20000`. _(2026-05-16)_
+
+- [x] **T7.2** — Thread `promptMaxChars` through `PipelineContext` in `src/pipeline/toolPipeline.ts`:
+  - Add `promptMaxChars: number` to `PipelineContext` interface.
+  - No logic change — field only.
+  - Acceptance: `npm run typecheck` exits 0. _(2026-05-16)_
+
+- [x] **T7.3** — Wire `promptMaxChars` into the composition root:
+  - Locate where `PipelineContext` is assembled (either `src/index.ts` or `src/server.ts`).
+  - Add `promptMaxChars: config.promptMaxChars` to the context object.
+  - Acceptance: `npm run typecheck` exits 0; server starts without error. _(2026-05-16)_
+
+- [x] **T7.4** — Add pre-flight guard in `src/tools/runAgent.ts` handler:
+  - At the top of the handler, before `executor.run()`, check `input.prompt.length > toolCtx.promptMaxChars`.
+  - If exceeded, throw an error that `mapThrownError` in the pipeline maps to `ErrorClass.VALIDATION`. Use a dedicated `PromptTooLargeError extends Error` with structured fields, or a plain `Error` with a machine-readable message — document the choice.
+  - Error must include `promptLength` and `promptMaxChars` in the payload so the caller can self-correct.
+  - Acceptance: oversized prompt returns `{ errorClass: "VALIDATION", promptLength, promptMaxChars }`; executor is never called. _(2026-05-16)_
+
+- [x] **T7.5** — Add `PromptTooLargeError` mapping in `src/pipeline/toolPipeline.ts` `mapThrownError`:
+  - Catch the new error type and return a `VALIDATION` `StructuredError` with `promptLength` and `promptMaxChars` fields.
+  - Acceptance: pipeline test confirms the mapping; no raw error leaks. _(2026-05-16)_
+
+- [x] **T7.6** — Config unit tests in `tests/unit/config.test.ts`:
+  - `PROMPT_MAX_CHARS=5000` → `promptMaxChars === 5000`.
+  - `PROMPT_MAX_CHARS=0` → `ConfigError`.
+  - `PROMPT_MAX_CHARS` unset → `promptMaxChars === 20000`.
+  - Acceptance: 3 new tests pass; existing config tests unchanged. _(2026-05-16)_
+
+- [x] **T7.7** — `runAgent` unit tests in `tests/unit/tools/runAgent.test.ts`:
+  - Prompt at exactly `promptMaxChars` chars → passes; executor called once.
+  - Prompt at `promptMaxChars + 1` chars → `VALIDATION` error; executor call count = 0.
+  - Acceptance: 2 new tests pass; all existing runAgent tests pass. _(2026-05-16)_
+
+- [x] **T7.8** — Update `docs/API_SPEC.md`:
+  - Add `PROMPT_MAX_CHARS` row to the env vars table (default `20000`, description: "Maximum prompt length in characters before run_agent rejects with VALIDATION error").
+  - Add oversized prompt error case under `run_agent` error table: `VALIDATION` when `prompt.length > promptMaxChars`.
+  - Acceptance: doc reflects new behaviour; no stale references. _(2026-05-16)_
+
+---
+
+**Phase 7 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes with ≥ 107 tests — 109 tests _(2026-05-16)_
+- [ ] Oversized prompt returns `VALIDATION` error before subprocess spawn (manual smoke test)
+- [ ] `PROMPT_MAX_CHARS` env var respected at runtime
+- [ ] CI green on `dev`
+- [ ] Issue [#38](https://github.com/devshah7/cursor-cli-mcp/issues/38) closed
+- [ ] v1.3 release PR `dev → main` created
+
+---
+
 ## Session Gate Record
 
 ```

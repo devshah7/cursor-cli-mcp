@@ -29,6 +29,7 @@ export function pipelineContextFromConfig(config: Config): PipelineContext {
     agentTimeoutMs: config.agentTimeoutMs,
     sessionCreateTimeoutMs: config.sessionCreateTimeoutMs,
     maxOutputBytes: config.maxOutputBytes,
+    promptMaxChars: config.promptMaxChars,
   };
 }
 

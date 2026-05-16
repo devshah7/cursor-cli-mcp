@@ -61,4 +61,21 @@ describe('loadConfig', () => {
     const c = loadConfig(process.env);
     expect(c.workspaceAllowlist).toEqual([]);
   });
+
+  it('PROMPT_MAX_CHARS unset defaults to 20000', () => {
+    delete process.env.PROMPT_MAX_CHARS;
+    const c = loadConfig(process.env);
+    expect(c.promptMaxChars).toBe(20_000);
+  });
+
+  it('PROMPT_MAX_CHARS=5000 is respected', () => {
+    process.env.PROMPT_MAX_CHARS = '5000';
+    const c = loadConfig(process.env);
+    expect(c.promptMaxChars).toBe(5000);
+  });
+
+  it('PROMPT_MAX_CHARS=0 throws ConfigError', () => {
+    process.env.PROMPT_MAX_CHARS = '0';
+    expect(() => loadConfig(process.env)).toThrow(ConfigError);
+  });
 });

@@ -18,6 +18,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
     agentTimeoutMs: 5000,
     sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
+    promptMaxChars: 20_000,
     workspaceAllowlist: ['/allowed'],
     logLevel: 'info',
     logPrompts: false,
