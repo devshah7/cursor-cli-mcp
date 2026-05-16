@@ -124,7 +124,7 @@ Create the file if it doesn't exist yet.
       "args": ["-y", "@devshah7/cursor-cli-mcp"],
       "env": {
         "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
-        "WORKSPACE_ALLOWLIST": "/Users/you/projects",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects;/Users/you/work",
         "AGENT_TIMEOUT_MS": "300000"
       }
     }
@@ -132,7 +132,7 @@ Create the file if it doesn't exist yet.
 }
 ```
 
-Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table above, and `WORKSPACE_ALLOWLIST` with the semicolon-separated absolute paths the agent is allowed to operate on.
+Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table above. Set `WORKSPACE_ALLOWLIST` to the absolute paths the agent is allowed to access — separate multiple paths with a semicolon (`;`). The agent will be blocked from any path not listed here.
 
 ### 3. Restart Claude Desktop
 
