@@ -242,52 +242,9 @@ You should see a JSON-RPC response with `serverInfo.name: "cursor-cli-mcp"`.
 
 ---
 
-## Development
+## Contributing
 
-To work on this project locally:
-
-```bash
-git clone https://github.com/devshah7/cursor-cli-mcp.git
-cd cursor-cli-mcp
-npm install
-```
-
-Gate check (all four must pass before opening a PR):
-
-```bash
-npm run lint        # eslint
-npm run typecheck   # tsc --noEmit
-npm run build       # compile to dist/
-npm run test:unit   # vitest unit tests
-```
-
-To use your local build instead of the npm package, point Claude Desktop at the compiled output:
-
-```json
-{
-  "mcpServers": {
-    "cursor-cli-mcp": {
-      "command": "node",
-      "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
-      "env": {
-        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
-        "WORKSPACE_ALLOWLIST": "/Users/you/projects"
-      }
-    }
-  }
-}
-```
-
-**Branch model:** `main` is production. All work targets the `dev` integration branch via a feature branch → PR. When `dev` is stable, a release PR merges it into `main`.
-
-```bash
-git checkout dev && git pull origin dev
-git checkout -b feat/my-change
-# ... make changes ...
-gh pr create --base dev
-```
-
-See `docs/BRANCH_STRATEGY.md` for the full rules.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup, branch model, gate check commands, and how to open a pull request.
 
 ---
 
