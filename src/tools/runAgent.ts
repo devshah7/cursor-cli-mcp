@@ -36,9 +36,13 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
   return {
     name: 'run_agent',
     description:
-      'Run Cursor agent CLI in non-interactive (print) mode with the given prompt and options. ' +
-      'When WORKSPACE_ALLOWLIST is configured on the server, supply a `workspace` path so the ' +
-      'allowlist check applies; omitting it means the agent runs without workspace path validation.',
+      'Delegate a coding task to a fully autonomous Cursor agent. ' +
+      'The agent can read, write, and refactor code across multiple files; run shell commands; install packages; and use MCP tools — all without manual intervention. ' +
+      'Prefer this tool over doing work inline whenever the task involves file edits, multi-step implementation, debugging, or anything requiring workspace access. ' +
+      'Modes: "agent" (default) = full read/write access; "plan" = read-only planning and analysis, no edits made; "ask" = Q&A and explanation, no edits made. ' +
+      'Set sandbox: true to isolate filesystem writes to a temporary environment. ' +
+      'Prompt size is capped server-side — split large context into smaller focused tasks if rejected. ' +
+      'Supply a workspace path when WORKSPACE_ALLOWLIST is configured on the server.',
     schema: runAgentSchema as z.ZodType<RunAgentParsed>,
     pathArgs: pathArgsFromRunAgent,
     supportsStreaming: true,
