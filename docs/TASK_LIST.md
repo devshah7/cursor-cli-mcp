@@ -601,7 +601,7 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24)_
 - [x] `npm run test:unit` passes with ≥ 103 tests _(2026-04-24 — 104 tests)_
 - [x] CI green on `dev` _(2026-04-24)_
-- [ ] v1.2 release PR `dev → main` created
+- [x] v1.2 release PR `dev → main` created _(2026-04-24 — PR #39 merged)_
 
 ---
 
