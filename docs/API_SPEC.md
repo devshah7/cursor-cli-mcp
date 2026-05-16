@@ -268,13 +268,27 @@ z.object({})  // no inputs
 
 ## 4. Resources
 
-### 4.1 `cli-permissions-reference` (FR-R1)
+### 4.1 `usage-patterns` (FR-R3)
+
+**URI:** `cursor-cli-mcp://resources/usage-patterns`  
+**MIME type:** `text/markdown`  
+**Content:** The primary orientation guide for any model or MCP client using this server. Covers:
+- Timeout behaviour: `-32001` is the MCP client dropping its connection, not an agent failure. The Cursor agent subprocess continues running and writes to disk.
+- Post-timeout workflow: wait → read workspace files → run gate check → call `run_agent` again only if incomplete.
+- Task sizing guidelines to stay within the client timeout window.
+- Mode selection (`agent` / `plan` / `ask`).
+- Multi-turn sessions via `session_create` + `session_resume`.
+- `WORKSPACE_ALLOWLIST` semicolon-separator and security notes.
+
+**Read this resource before calling any tool.**
+
+### 4.2 `cli-permissions-reference` (FR-R1)
 
 **URI:** `cursor-cli-mcp://resources/cli-permissions`  
 **MIME type:** `text/markdown`  
 **Content:** Static markdown explaining `~/.cursor/cli-config.json` and `.cursor/cli.json` permission shapes (`Shell`, `Read`, `Write`, `WebFetch`, `Mcp`). Updated manually as Cursor docs evolve.
 
-### 4.2 `rules-discovery` (FR-R2)
+### 4.3 `rules-discovery` (FR-R2)
 
 **URI:** `cursor-cli-mcp://resources/rules-discovery`  
 **MIME type:** `text/markdown`  

@@ -1,5 +1,6 @@
 import { cliPermissionsReference } from '../resources/cliPermissions.js';
 import { rulesDiscovery } from '../resources/rulesDiscovery.js';
+import { usagePatterns } from '../resources/usagePatterns.js';
 
 export interface ResourceDescriptor {
   name: string;
@@ -9,4 +10,8 @@ export interface ResourceDescriptor {
   content: string;
 }
 
-export const ALL_RESOURCES: ResourceDescriptor[] = [cliPermissionsReference, rulesDiscovery];
+export const ALL_RESOURCES: ResourceDescriptor[] = [
+  usagePatterns,
+  cliPermissionsReference,
+  rulesDiscovery,
+];
