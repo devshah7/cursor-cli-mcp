@@ -675,6 +675,47 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 ---
 
+## Phase 8 — Workspace Allowlist Separator Fix (v1.3)
+
+**Source:** Identified 2026-05-16 — colon separator in `WORKSPACE_ALLOWLIST` is ambiguous on Windows (`C:\foo` contains colons).  
+**Branch:** `fix/workspace-allowlist-separator` cut from `dev`; PR back to `dev`.  
+**Date started:** 2026-05-16  
+**Approach:** Replace `:` separator with `;` in parser, all docs, and all tests. Breaking change — acceptable as no production users exist yet.
+
+---
+
+### `fix/workspace-allowlist-separator` — single branch
+
+**Files in scope:** `src/config.ts`, `tests/unit/config.test.ts`, `docs/API_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/TESTING_STRATEGY.md`, `docs/TESTING_GUIDE.md`, `README.md`, `CLAUDE.md`
+
+- [x] **T8.1** — Change separator in `src/config.ts` from `:` to `;`:
+  - Line: `.split(':')` → `.split(';')`
+  - Acceptance: `WORKSPACE_ALLOWLIST="/a;/b"` → `['/a', '/b']`; `WORKSPACE_ALLOWLIST="/a:/b"` → treated as one path. _(2026-05-16)_
+
+- [x] **T8.2** — Update `tests/unit/config.test.ts`:
+  - Change `WORKSPACE_ALLOWLIST = '/a:/b'` → `'/a;/b'`
+  - Acceptance: config tests pass. _(2026-05-16)_
+
+- [x] **T8.3** — Update all documentation references from colon-separated to semicolon-separated:
+  - `docs/API_SPEC.md` — env vars table description + example snippet
+  - `docs/ARCHITECTURE.md` — Config table entry
+  - `docs/TESTING_STRATEGY.md` — parsing description
+  - `docs/TESTING_GUIDE.md` — example config snippet
+  - `README.md` — env vars table, example snippet, inline prose ("colon-separated" → "semicolon-separated")
+  - `CLAUDE.md` — env var quick reference table
+  - Acceptance: no remaining "colon-separated" references to `WORKSPACE_ALLOWLIST` in any doc. _(2026-05-16)_
+
+---
+
+**Phase 8 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
+- [x] No "colon-separated" references to `WORKSPACE_ALLOWLIST` in any file _(2026-05-16)_
+- [ ] CI green on `dev`
+
+---
+
 ## Session Gate Record
 
 ```

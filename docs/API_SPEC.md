@@ -359,7 +359,7 @@ unexpected JS exception (not spawn ENOENT)?
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Timeout for `session_create` / `create-chat` only (ms) |
 | `MAX_OUTPUT_BYTES` | `524288` | Ring buffer cap for captured stdout |
 | `PROMPT_MAX_CHARS` | `20000` | Maximum prompt length in characters for `run_agent`; requests exceeding this return `VALIDATION` before spawning a subprocess |
-| `WORKSPACE_ALLOWLIST` | `""` | Colon-separated allowed workspace paths |
+| `WORKSPACE_ALLOWLIST` | `""` | Semicolon-separated allowed workspace paths |
 
 Example `mcp.json` entry for Claude Desktop:
 
@@ -371,7 +371,7 @@ Example `mcp.json` entry for Claude Desktop:
       "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
       "env": {
         "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
-        "WORKSPACE_ALLOWLIST": "/Users/you/projects:/Users/you/work",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects;/Users/you/work",
         "AGENT_TIMEOUT_MS": "120000",
         "SESSION_CREATE_TIMEOUT_MS": "10000",
         "MAX_OUTPUT_BYTES": "524288",

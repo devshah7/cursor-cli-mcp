@@ -334,7 +334,7 @@ Loads and validates all configuration from environment variables. Injected into 
 | `AGENT_TIMEOUT_MS` | `120000` | Integer > 0; throws `ConfigError` if invalid |
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Integer > 0; throws `ConfigError` if invalid |
 | `MAX_OUTPUT_BYTES` | `524288` | Integer ≥ `1024`; throws `ConfigError` if below minimum or invalid |
-| `WORKSPACE_ALLOWLIST` | `""` (deny all) | Split on `:`; empty → deny all; no allow-all mode |
+| `WORKSPACE_ALLOWLIST` | `""` (deny all) | Split on `;`; empty → deny all; no allow-all mode |
 | `LOG_LEVEL` | `info` | One of: `debug`, `info`, `warn`, `error` |
 | `LOG_PROMPTS` | `false` | Prompt text logged only if `true`, only at `debug` |
 
