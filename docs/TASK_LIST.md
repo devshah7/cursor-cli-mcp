@@ -755,7 +755,7 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
 - [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
 - [x] All three rewritten descriptions lead with capability, not CLI mechanics _(2026-05-16)_
-- [ ] CI green on `dev`
+- [x] CI green on `dev` _(2026-05-16 — PR #44 merged)_
 
 ---
 
