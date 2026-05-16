@@ -25,9 +25,8 @@
     | "BINARY_NOT_FOUND"   // agent binary not found at configured path
     | "AUTH_REQUIRED"      // agent reports login required
     | "TIMEOUT"            // subprocess exceeded AGENT_TIMEOUT_MS
-    | "OUTPUT_TRUNCATED"   // output exceeded MAX_OUTPUT_BYTES (non-fatal, included in success response)
     | "SECURITY"           // path allowlist violation
-    | "VALIDATION"         // Zod schema validation failure
+    | "VALIDATION"         // Zod schema validation failure or prompt too large
     | "AGENT_ERROR"        // agent exited non-zero for other reasons
     | "UNKNOWN";           // unclassified error
   message: string;         // human-readable description
@@ -268,13 +267,27 @@ z.object({})  // no inputs
 
 ## 4. Resources
 
-### 4.1 `cli-permissions-reference` (FR-R1)
+### 4.1 `usage-patterns` (FR-R3)
+
+**URI:** `cursor-cli-mcp://resources/usage-patterns`  
+**MIME type:** `text/markdown`  
+**Content:** The primary orientation guide for any model or MCP client using this server. Covers:
+- Timeout behaviour: `-32001` is the MCP client dropping its connection, not an agent failure. The Cursor agent subprocess continues running and writes to disk.
+- Post-timeout workflow: wait → read workspace files → run gate check → call `run_agent` again only if incomplete.
+- Task sizing guidelines to stay within the client timeout window.
+- Mode selection (`agent` / `plan` / `ask`).
+- Multi-turn sessions via `session_create` + `session_resume`.
+- `WORKSPACE_ALLOWLIST` semicolon-separator and security notes.
+
+**Read this resource before calling any tool.**
+
+### 4.2 `cli-permissions-reference` (FR-R1)
 
 **URI:** `cursor-cli-mcp://resources/cli-permissions`  
 **MIME type:** `text/markdown`  
 **Content:** Static markdown explaining `~/.cursor/cli-config.json` and `.cursor/cli.json` permission shapes (`Shell`, `Read`, `Write`, `WebFetch`, `Mcp`). Updated manually as Cursor docs evolve.
 
-### 4.2 `rules-discovery` (FR-R2)
+### 4.3 `rules-discovery` (FR-R2)
 
 **URI:** `cursor-cli-mcp://resources/rules-discovery`  
 **MIME type:** `text/markdown`  
@@ -320,6 +333,9 @@ timedOut === true?
 Zod parse throws ZodError?
   → VALIDATION
 
+prompt.length > promptMaxChars (run_agent only)?
+  → VALIDATION (with promptLength and promptMaxChars fields in error payload)
+
 security.validatePaths() throws?
   → SECURITY
 
@@ -342,7 +358,7 @@ unexpected JS exception (not spawn ENOENT)?
 ```json
 {
   "name": "cursor-cli-mcp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MCP server for controlling Cursor's agent CLI"
 }
 ```
@@ -355,7 +371,8 @@ unexpected JS exception (not spawn ENOENT)?
 | `AGENT_TIMEOUT_MS` | `120000` | Default subprocess timeout for most tools (ms) |
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Timeout for `session_create` / `create-chat` only (ms) |
 | `MAX_OUTPUT_BYTES` | `524288` | Ring buffer cap for captured stdout |
-| `WORKSPACE_ALLOWLIST` | `""` | Colon-separated allowed workspace paths |
+| `PROMPT_MAX_CHARS` | `20000` | Maximum prompt length in characters for `run_agent`; requests exceeding this return `VALIDATION` before spawning a subprocess |
+| `WORKSPACE_ALLOWLIST` | `""` | Semicolon-separated allowed workspace paths |
 
 Example `mcp.json` entry for Claude Desktop:
 
@@ -367,10 +384,11 @@ Example `mcp.json` entry for Claude Desktop:
       "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
       "env": {
         "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
-        "WORKSPACE_ALLOWLIST": "/Users/you/projects:/Users/you/work",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects;/Users/you/work",
         "AGENT_TIMEOUT_MS": "120000",
         "SESSION_CREATE_TIMEOUT_MS": "10000",
-        "MAX_OUTPUT_BYTES": "524288"
+        "MAX_OUTPUT_BYTES": "524288",
+        "PROMPT_MAX_CHARS": "20000"
       }
     }
   }

@@ -3,6 +3,7 @@ import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
+import { buildError } from '../errors.js';
 
 export const sessionCreateSchema = z.object({
   workspace: z.string().optional(),
@@ -65,9 +66,9 @@ export function createSessionCreateDescriptor(
   return {
     name: 'session_create',
     description:
-      'Create a new empty agent chat session and return its id (`agent create-chat`). ' +
-      'Returns a UUID on stdout. Known issue: process may hang after printing the ID — ' +
-      'the executor timeout is the safety net (sessionCreateTimeoutMs).',
+      'Start a new persistent Cursor agent session for multi-turn or long-running work. ' +
+      'Use this when a task requires continuity across multiple prompts — the returned session ID can be passed to session_resume to continue the conversation with full prior context. ' +
+      'Returns a UUID string. Times out after sessionCreateTimeoutMs (default 10s) if the process hangs.',
     schema: sessionCreateSchema as z.ZodType<SessionCreateParsed>,
     pathArgs: pathArgsFromSessionCreate,
     handler: async (
@@ -87,7 +88,9 @@ export function createSessionCreateDescriptor(
       }
       const sessionId = parseCreateChatStdout(result.stdout);
       if (sessionId === null) {
-        throw new Error('create-chat: could not parse session id from stdout');
+        throw buildError('VALIDATION', 'create-chat: could not parse session id from stdout', {
+          stderrExcerpt: result.stdout.slice(0, 200),
+        });
       }
       return { sessionId };
     },

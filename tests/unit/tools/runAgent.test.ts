@@ -18,6 +18,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
     agentTimeoutMs: 5000,
     sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
+    promptMaxChars: 20_000,
     workspaceAllowlist: ['/allowed'],
     logLevel: 'info',
     logPrompts: false,
@@ -251,6 +252,43 @@ describe('run_agent tool', () => {
   it('descriptor has supportsStreaming set to true', () => {
     const descriptor = createRunAgentDescriptor(ctx);
     expect(descriptor.supportsStreaming).toBe(true);
+  });
+
+  it('prompt at exactly promptMaxChars is accepted and executor is called', async () => {
+    let runs = 0;
+    const executor = new MockExecutor(async () => {
+      runs++;
+      return {
+        stdout: 'ok',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      };
+    });
+    const limitCtx = pipelineContextFromConfig(baseConfig({ promptMaxChars: 10 }));
+    const wrapped = wrapTool(createRunAgentDescriptor(limitCtx), executor, limitCtx);
+    const out = await wrapped({ prompt: 'a'.repeat(10) });
+    expect(runs).toBe(1);
+    expect(out.isError).not.toBe(true);
+  });
+
+  it('prompt exceeding promptMaxChars returns VALIDATION and never calls executor', async () => {
+    let runs = 0;
+    const executor = new MockExecutor(async () => {
+      runs++;
+      throw new Error('should not run');
+    });
+    const limitCtx = pipelineContextFromConfig(baseConfig({ promptMaxChars: 10 }));
+    const wrapped = wrapTool(createRunAgentDescriptor(limitCtx), executor, limitCtx);
+    const out = await wrapped({ prompt: 'a'.repeat(11) });
+    expect(runs).toBe(0);
+    expect(out.isError).toBe(true);
+    const body = JSON.parse(getText(out));
+    expect(body.errorClass).toBe('VALIDATION');
+    expect(body.promptLength).toBe(11);
+    expect(body.promptMaxChars).toBe(10);
   });
 
   it('shell metacharacters in prompt are passed as raw spawn arg', async () => {

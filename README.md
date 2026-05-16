@@ -162,6 +162,26 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
 
 ### 3. Add the MCP server entry
 
+**Recommended (always uses latest version)**
+
+```json
+{
+  "mcpServers": {
+    "cursor-cli-mcp": {
+      "command": "npx",
+      "args": ["-y", "@devshah7/cursor-cli-mcp"],
+      "env": {
+        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects",
+        "AGENT_TIMEOUT_MS": "300000"
+      }
+    }
+  }
+}
+```
+
+**Alternative (local development build)**
+
 ```json
 {
   "mcpServers": {
@@ -170,7 +190,7 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
       "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
       "env": {
         "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
-        "WORKSPACE_ALLOWLIST": "/Users/you/projects:/Users/you/work",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects;/Users/you/work",
         "AGENT_TIMEOUT_MS": "120000",
         "SESSION_CREATE_TIMEOUT_MS": "10000",
         "MAX_OUTPUT_BYTES": "524288",
@@ -181,7 +201,7 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
 }
 ```
 
-Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table above, and `WORKSPACE_ALLOWLIST` with the colon-separated absolute paths the agent is allowed to operate on.
+Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table above, and `WORKSPACE_ALLOWLIST` with the semicolon-separated absolute paths the agent is allowed to operate on.
 
 ### 4. Restart Claude Desktop
 
@@ -192,10 +212,11 @@ Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `AGENT_BINARY_PATH` | Platform default | Absolute path to the `cursor-agent` binary |
-| `WORKSPACE_ALLOWLIST` | `""` (deny all) | Colon-separated list of allowed absolute paths. Empty = deny all workspace operations. No allow-all mode. |
+| `WORKSPACE_ALLOWLIST` | `""` (deny all) | Semicolon-separated list of allowed absolute paths. Empty = deny all workspace operations. No allow-all mode. |
 | `AGENT_TIMEOUT_MS` | `120000` | Milliseconds before the subprocess is killed |
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Milliseconds before `session_create` (`create-chat`) subprocess is killed — prevents create-chat hang |
 | `MAX_OUTPUT_BYTES` | `524288` | Maximum stdout captured (ring buffer — older bytes are dropped) |
+| `PROMPT_MAX_CHARS` | `20000` | Maximum prompt length in characters; `run_agent` returns a `VALIDATION` error before invoking the CLI if exceeded |
 | `LOG_LEVEL` | `info` | One of: `debug`, `info`, `warn`, `error` |
 | `LOG_PROMPTS` | `false` | Log prompt text — only at `debug` level if `true` |
 

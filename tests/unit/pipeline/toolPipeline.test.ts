@@ -22,6 +22,7 @@ function pc(allowlist: string[]): PipelineContext {
     agentTimeoutMs: 5000,
     sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
+    promptMaxChars: 20_000,
   };
 }
 

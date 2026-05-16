@@ -13,7 +13,7 @@ This guide walks through testing every tool, resource, and prompt exposed by the
 In your `claude_desktop_config.json`, append the absolute path to `testing/` in the `WORKSPACE_ALLOWLIST` env var:
 
 ```json
-"WORKSPACE_ALLOWLIST": "/your/existing/paths:/absolute/path/to/cursor-cli-mcp/testing"
+"WORKSPACE_ALLOWLIST": "/your/existing/paths;/absolute/path/to/cursor-cli-mcp/testing"
 ```
 
 Restart Claude Desktop after saving.

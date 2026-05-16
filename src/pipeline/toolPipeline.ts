@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { ErrorClass, buildError, type StructuredError } from '../errors.js';
+import { ErrorClass, PromptTooLargeError, buildError, type StructuredError } from '../errors.js';
 import type { Logger } from '../logger.js';
 import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
@@ -14,6 +14,7 @@ export interface PipelineContext {
   agentTimeoutMs: number;
   sessionCreateTimeoutMs: number;
   maxOutputBytes: number;
+  promptMaxChars: number;
   /** Phase 4 streaming — forward `run_agent` stdout chunks to MCP client; undefined = aggregated-only. */
   sendNotification?: (chunk: string) => void;
   /** Optional logger for pipeline-level diagnostics (e.g. workspace bypass warning). */
@@ -87,6 +88,14 @@ function mapExecutorOutcome(result: ExecutorResult): CallToolResult {
 }
 
 function mapThrownError(err: unknown): CallToolResult {
+  if (err instanceof PromptTooLargeError) {
+    return errorPayload({
+      errorClass: ErrorClass.VALIDATION,
+      message: err.message,
+      promptLength: err.promptLength,
+      promptMaxChars: err.promptMaxChars,
+    } as StructuredError & { promptLength: number; promptMaxChars: number });
+  }
   if (err instanceof ZodError) {
     return errorPayload(
       buildError(ErrorClass.VALIDATION, err.message, {
@@ -107,6 +116,16 @@ function mapThrownError(err: unknown): CallToolResult {
         }),
       );
     }
+  }
+  // Handle StructuredError-shaped objects thrown directly from handlers (e.g. buildError(...))
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'errorClass' in err &&
+    'message' in err &&
+    typeof (err as Record<string, unknown>).errorClass === 'string'
+  ) {
+    return errorPayload(err as StructuredError);
   }
   const msg = err instanceof Error ? err.message : 'Unknown error';
   return errorPayload(buildError(ErrorClass.UNKNOWN, msg));

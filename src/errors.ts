@@ -5,7 +5,6 @@ export const ErrorClass = {
   BINARY_NOT_FOUND: 'BINARY_NOT_FOUND',
   AUTH_REQUIRED: 'AUTH_REQUIRED',
   TIMEOUT: 'TIMEOUT',
-  OUTPUT_TRUNCATED: 'OUTPUT_TRUNCATED',
   SECURITY: 'SECURITY',
   VALIDATION: 'VALIDATION',
   AGENT_ERROR: 'AGENT_ERROR',
@@ -32,4 +31,16 @@ export function buildError(
     message,
     ...extras,
   };
+}
+
+export class PromptTooLargeError extends Error {
+  constructor(
+    readonly promptLength: number,
+    readonly promptMaxChars: number,
+  ) {
+    super(
+      `Prompt is ${promptLength} characters, which exceeds the ${promptMaxChars}-character limit. Split into smaller tasks or reduce context.`,
+    );
+    this.name = 'PromptTooLargeError';
+  }
 }

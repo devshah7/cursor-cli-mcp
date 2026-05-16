@@ -601,7 +601,203 @@ All Phase 6 branches are **PARALLEL** unless noted.
 - [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-04-24)_
 - [x] `npm run test:unit` passes with ≥ 103 tests _(2026-04-24 — 104 tests)_
 - [x] CI green on `dev` _(2026-04-24)_
-- [ ] v1.2 release PR `dev → main` created
+- [x] v1.2 release PR `dev → main` created _(2026-04-24 — PR #39 merged)_
+
+---
+
+## Phase 7 — Prompt Size Guard (v1.3)
+
+**Source:** Issue [#38](https://github.com/devshah7/cursor-cli-mcp/issues/38) — large prompts produce opaque TIMEOUT with no actionable signal.  
+**Branch:** `fix/prompt-size-guard` cut from `dev`; PR back to `dev`. Release PR `dev → main` = v1.3.  
+**Date started:** 2026-05-16  
+**Approach:** Options A + C from issue #38 — pre-flight prompt size guard with configurable `PROMPT_MAX_CHARS` env var. Option B (stdout hint scan on timeout) deferred.
+
+---
+
+### `fix/prompt-size-guard` — single branch
+
+**Files in scope:** `src/config.ts`, `src/pipeline/toolPipeline.ts`, `src/index.ts`, `src/server.ts`, `src/tools/runAgent.ts`, `tests/unit/config.test.ts`, `tests/unit/tools/runAgent.test.ts`, `docs/API_SPEC.md`
+
+- [x] **T7.1** — Add `promptMaxChars` to `src/config.ts`:
+  - Add `promptMaxChars: number` to `Config` interface.
+  - Parse `PROMPT_MAX_CHARS` env var via `parsePositiveInt`, default `20_000`.
+  - Throw `ConfigError` if parsed value is `< 1`.
+  - Return `promptMaxChars` in the `Config` object.
+  - Acceptance: `PROMPT_MAX_CHARS=5000` → `config.promptMaxChars === 5000`; `PROMPT_MAX_CHARS=0` → `ConfigError`; unset → `20000`. _(2026-05-16)_
+
+- [x] **T7.2** — Thread `promptMaxChars` through `PipelineContext` in `src/pipeline/toolPipeline.ts`:
+  - Add `promptMaxChars: number` to `PipelineContext` interface.
+  - No logic change — field only.
+  - Acceptance: `npm run typecheck` exits 0. _(2026-05-16)_
+
+- [x] **T7.3** — Wire `promptMaxChars` into the composition root:
+  - Locate where `PipelineContext` is assembled (either `src/index.ts` or `src/server.ts`).
+  - Add `promptMaxChars: config.promptMaxChars` to the context object.
+  - Acceptance: `npm run typecheck` exits 0; server starts without error. _(2026-05-16)_
+
+- [x] **T7.4** — Add pre-flight guard in `src/tools/runAgent.ts` handler:
+  - At the top of the handler, before `executor.run()`, check `input.prompt.length > toolCtx.promptMaxChars`.
+  - If exceeded, throw an error that `mapThrownError` in the pipeline maps to `ErrorClass.VALIDATION`. Use a dedicated `PromptTooLargeError extends Error` with structured fields, or a plain `Error` with a machine-readable message — document the choice.
+  - Error must include `promptLength` and `promptMaxChars` in the payload so the caller can self-correct.
+  - Acceptance: oversized prompt returns `{ errorClass: "VALIDATION", promptLength, promptMaxChars }`; executor is never called. _(2026-05-16)_
+
+- [x] **T7.5** — Add `PromptTooLargeError` mapping in `src/pipeline/toolPipeline.ts` `mapThrownError`:
+  - Catch the new error type and return a `VALIDATION` `StructuredError` with `promptLength` and `promptMaxChars` fields.
+  - Acceptance: pipeline test confirms the mapping; no raw error leaks. _(2026-05-16)_
+
+- [x] **T7.6** — Config unit tests in `tests/unit/config.test.ts`:
+  - `PROMPT_MAX_CHARS=5000` → `promptMaxChars === 5000`.
+  - `PROMPT_MAX_CHARS=0` → `ConfigError`.
+  - `PROMPT_MAX_CHARS` unset → `promptMaxChars === 20000`.
+  - Acceptance: 3 new tests pass; existing config tests unchanged. _(2026-05-16)_
+
+- [x] **T7.7** — `runAgent` unit tests in `tests/unit/tools/runAgent.test.ts`:
+  - Prompt at exactly `promptMaxChars` chars → passes; executor called once.
+  - Prompt at `promptMaxChars + 1` chars → `VALIDATION` error; executor call count = 0.
+  - Acceptance: 2 new tests pass; all existing runAgent tests pass. _(2026-05-16)_
+
+- [x] **T7.8** — Update `docs/API_SPEC.md`:
+  - Add `PROMPT_MAX_CHARS` row to the env vars table (default `20000`, description: "Maximum prompt length in characters before run_agent rejects with VALIDATION error").
+  - Add oversized prompt error case under `run_agent` error table: `VALIDATION` when `prompt.length > promptMaxChars`.
+  - Acceptance: doc reflects new behaviour; no stale references. _(2026-05-16)_
+
+---
+
+**Phase 7 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes with ≥ 107 tests — 109 tests _(2026-05-16)_
+- [ ] Oversized prompt returns `VALIDATION` error before subprocess spawn (manual smoke test)
+- [ ] `PROMPT_MAX_CHARS` env var respected at runtime
+- [ ] CI green on `dev`
+- [x] Issue [#38](https://github.com/devshah7/cursor-cli-mcp/issues/38) closed _(2026-05-16)_
+- [ ] v1.3 release PR `dev → main` created
+
+---
+
+## Phase 8 — Workspace Allowlist Separator Fix (v1.3)
+
+**Source:** Identified 2026-05-16 — colon separator in `WORKSPACE_ALLOWLIST` is ambiguous on Windows (`C:\foo` contains colons).  
+**Branch:** `fix/workspace-allowlist-separator` cut from `dev`; PR back to `dev`.  
+**Date started:** 2026-05-16  
+**Approach:** Replace `:` separator with `;` in parser, all docs, and all tests. Breaking change — acceptable as no production users exist yet.
+
+---
+
+### `fix/workspace-allowlist-separator` — single branch
+
+**Files in scope:** `src/config.ts`, `tests/unit/config.test.ts`, `docs/API_SPEC.md`, `docs/ARCHITECTURE.md`, `docs/TESTING_STRATEGY.md`, `docs/TESTING_GUIDE.md`, `README.md`, `CLAUDE.md`
+
+- [x] **T8.1** — Change separator in `src/config.ts` from `:` to `;`:
+  - Line: `.split(':')` → `.split(';')`
+  - Acceptance: `WORKSPACE_ALLOWLIST="/a;/b"` → `['/a', '/b']`; `WORKSPACE_ALLOWLIST="/a:/b"` → treated as one path. _(2026-05-16)_
+
+- [x] **T8.2** — Update `tests/unit/config.test.ts`:
+  - Change `WORKSPACE_ALLOWLIST = '/a:/b'` → `'/a;/b'`
+  - Acceptance: config tests pass. _(2026-05-16)_
+
+- [x] **T8.3** — Update all documentation references from colon-separated to semicolon-separated:
+  - `docs/API_SPEC.md` — env vars table description + example snippet
+  - `docs/ARCHITECTURE.md` — Config table entry
+  - `docs/TESTING_STRATEGY.md` — parsing description
+  - `docs/TESTING_GUIDE.md` — example config snippet
+  - `README.md` — env vars table, example snippet, inline prose ("colon-separated" → "semicolon-separated")
+  - `CLAUDE.md` — env var quick reference table
+  - Acceptance: no remaining "colon-separated" references to `WORKSPACE_ALLOWLIST` in any doc. _(2026-05-16)_
+
+---
+
+**Phase 8 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
+- [x] No "colon-separated" references to `WORKSPACE_ALLOWLIST` in any file _(2026-05-16)_
+- [x] CI green on `dev` _(2026-05-16 — PR #43 merged)_
+
+---
+
+## Phase 9 — Tool Description Improvements (v1.3)
+
+**Source:** Tool descriptions are CLI-focused rather than capability-focused. MCP clients (Claude) have no signal to prefer delegating complex coding tasks to cursor agents over doing them inline.  
+**Branch:** `chore/tool-descriptions` cut from `dev`; PR back to `dev`.  
+**Date started:** 2026-05-16  
+**Goal:** Rewrite descriptions to lead with agent capability, guide delegation behaviour, and surface key constraints (prompt limit, modes, sandbox).
+
+---
+
+### `chore/tool-descriptions` — single branch
+
+**Files in scope:** `src/tools/runAgent.ts`, `src/tools/sessionCreate.ts`, `src/tools/sessionResume.ts`, `src/tools/agentStatus.ts`, `src/tools/listModels.ts`
+
+- [x] **T9.1** — Rewrite `run_agent` description:
+  - Lead with capability: full autonomous coding agent — writes, edits, refactors across multiple files, runs shell commands, uses tools.
+  - Explicitly guide delegation: prefer this tool over inline edits for any multi-step coding task.
+  - Surface key constraints: `mode` values and what they mean (agent=full, plan=read-only planning, ask=Q&A); `sandbox` for filesystem isolation; prompt size limit enforced server-side.
+  - Acceptance: description leads with capability, not CLI mechanics. _(2026-05-16)_
+
+- [x] **T9.2** — Rewrite `session_create` description:
+  - Frame as: start a persistent agent session for multi-turn or long-running work where continuity matters.
+  - Mention the returned UUID is used with `session_resume` to continue the conversation.
+  - Keep the hang/timeout caveat but de-emphasise it (move to end).
+  - Acceptance: description frames the use case, not the implementation. _(2026-05-16)_
+
+- [x] **T9.3** — Rewrite `session_resume` description:
+  - Frame as: continue a prior agent session — use when iterating, following up, or building on previous agent context.
+  - Remove the "not explicitly documented" caveat — it's been confirmed working and the caveat undermines confidence.
+  - Acceptance: description is positive and capability-focused. _(2026-05-16)_
+
+- [x] **T9.4** — Verify `agent_status` and `list_models` descriptions are adequate — no change needed. _(2026-05-16)_
+
+---
+
+**Phase 9 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
+- [x] All three rewritten descriptions lead with capability, not CLI mechanics _(2026-05-16)_
+- [x] CI green on `dev` _(2026-05-16 — PR #44 merged)_
+
+---
+
+## Phase 10 — npm Publish Setup (v1.0.0 public release)
+
+**Source:** Make the tool easy to install for end users via `npx` — no local build step required.  
+**Branch:** `chore/npm-publish-setup` cut from `dev`; PR back to `dev`.  
+**Date started:** 2026-05-16  
+
+---
+
+### `chore/npm-publish-setup` — single branch
+
+**Files in scope:** `package.json`, `src/index.ts`, `README.md`
+
+- [x] **T10.1** — Update `package.json`:
+  - Rename package to `@devshah7/cursor-cli-mcp`
+  - Set version to `1.0.0`
+  - Add `bin: { "cursor-cli-mcp": "dist/index.js" }`
+  - Add `files: ["dist", "README.md", "LICENSE"]`
+  - Add `prepublishOnly` script: `npm run build`
+  - Acceptance: `npm pack --dry-run` shows only `dist/`, `README.md`, `LICENSE` _(2026-05-16)_
+
+- [x] **T10.2** — Add shebang to `src/index.ts`:
+  - First line: `#!/usr/bin/env node`
+  - Acceptance: `npm run build` succeeds; `dist/index.js` starts with shebang _(2026-05-16)_
+
+- [x] **T10.3** — Update `README.md`:
+  - Add `npx` config example as the primary install method
+  - Keep local path example as secondary ("for development")
+  - Acceptance: README shows both `npx` and local path variants _(2026-05-16)_
+
+---
+
+**Phase 10 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
+- [x] `npm pack --dry-run` shows only expected files (107 files, no stale sessionList) _(2026-05-16)_
+- [x] `dist/index.js` starts with shebang line _(2026-05-16)_
+- [ ] CI green on `dev`
+- [ ] `npm publish --dry-run` exits 0
 
 ---
 

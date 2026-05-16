@@ -21,6 +21,7 @@ function baseConfig(overrides?: Partial<Config>): Config {
     agentTimeoutMs: 5000,
     sessionCreateTimeoutMs: 5000,
     maxOutputBytes: 4096,
+    promptMaxChars: 20_000,
     workspaceAllowlist: ['/allowed'],
     logLevel: 'info',
     logPrompts: false,
@@ -115,6 +116,23 @@ describe('session_create tool', () => {
     const out = await wrapped({});
     expect(out.isError).toBe(true);
     expect(JSON.parse(getText(out)).errorClass).toBe('AGENT_ERROR');
+  });
+
+  it('unparseable stdout on exit 0 returns VALIDATION error', async () => {
+    const executor = new MockExecutor(async () =>
+      Promise.resolve({
+        stdout: '',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      }),
+    );
+    const wrapped = wrapTool(createSessionCreateDescriptor(ctx), executor, ctx);
+    const out = await wrapped({});
+    expect(out.isError).toBe(true);
+    expect(JSON.parse(getText(out)).errorClass).toBe('VALIDATION');
   });
 
   it('timed out session_create returns TIMEOUT', async () => {

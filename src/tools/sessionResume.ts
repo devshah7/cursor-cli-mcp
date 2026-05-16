@@ -29,9 +29,9 @@ export function createSessionResumeDescriptor(
     name: 'session_resume',
     supportsStreaming: true,
     description:
-      'Resume an existing agent chat session with an additional prompt (`agent -p … --resume <chatId>`). ' +
-      'Note: combining --resume with --print is not explicitly documented by Cursor — ' +
-      'behaviour is confirmed by flag inspection but not by official docs. Hanging risk same as session_create.',
+      'Continue a prior Cursor agent session with a new prompt, preserving full conversation context and prior workspace state. ' +
+      'Use this to iterate on previous agent work, follow up on results, or build on what the agent already knows about the codebase. ' +
+      'Requires a session_id returned by session_create. Supports streaming output.',
     schema: sessionResumeSchema as z.ZodType<SessionResumeParsed>,
     pathArgs: () => [],
     handler: async (

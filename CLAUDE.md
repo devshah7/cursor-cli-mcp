@@ -119,7 +119,7 @@ All four must exit 0.
 | `AGENT_BINARY_PATH` | Platform default | Path to `agent` binary |
 | `AGENT_TIMEOUT_MS` | `120000` | Subprocess timeout |
 | `MAX_OUTPUT_BYTES` | `524288` | Ring buffer size |
-| `WORKSPACE_ALLOWLIST` | `""` | Colon-separated allowed paths |
+| `WORKSPACE_ALLOWLIST` | `""` | Semicolon-separated allowed paths |
 | `LOG_LEVEL` | `info` | Logging level |
 | `LOG_PROMPTS` | `false` | Log prompt text at debug |
 

@@ -28,7 +28,7 @@ describe('loadConfig', () => {
     process.env.AGENT_TIMEOUT_MS = '5000';
     process.env.SESSION_CREATE_TIMEOUT_MS = '7000';
     process.env.MAX_OUTPUT_BYTES = '2048';
-    process.env.WORKSPACE_ALLOWLIST = '/a:/b';
+    process.env.WORKSPACE_ALLOWLIST = '/a;/b';
     process.env.LOG_LEVEL = 'debug';
     process.env.LOG_PROMPTS = 'true';
     const c = loadConfig(process.env);
@@ -60,5 +60,22 @@ describe('loadConfig', () => {
     process.env.WORKSPACE_ALLOWLIST = '';
     const c = loadConfig(process.env);
     expect(c.workspaceAllowlist).toEqual([]);
+  });
+
+  it('PROMPT_MAX_CHARS unset defaults to 20000', () => {
+    delete process.env.PROMPT_MAX_CHARS;
+    const c = loadConfig(process.env);
+    expect(c.promptMaxChars).toBe(20_000);
+  });
+
+  it('PROMPT_MAX_CHARS=5000 is respected', () => {
+    process.env.PROMPT_MAX_CHARS = '5000';
+    const c = loadConfig(process.env);
+    expect(c.promptMaxChars).toBe(5000);
+  });
+
+  it('PROMPT_MAX_CHARS=0 throws ConfigError', () => {
+    process.env.PROMPT_MAX_CHARS = '0';
+    expect(() => loadConfig(process.env)).toThrow(ConfigError);
   });
 });
