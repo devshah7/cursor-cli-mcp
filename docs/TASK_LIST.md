@@ -716,6 +716,49 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 ---
 
+## Phase 9 — Tool Description Improvements (v1.3)
+
+**Source:** Tool descriptions are CLI-focused rather than capability-focused. MCP clients (Claude) have no signal to prefer delegating complex coding tasks to cursor agents over doing them inline.  
+**Branch:** `chore/tool-descriptions` cut from `dev`; PR back to `dev`.  
+**Date started:** 2026-05-16  
+**Goal:** Rewrite descriptions to lead with agent capability, guide delegation behaviour, and surface key constraints (prompt limit, modes, sandbox).
+
+---
+
+### `chore/tool-descriptions` — single branch
+
+**Files in scope:** `src/tools/runAgent.ts`, `src/tools/sessionCreate.ts`, `src/tools/sessionResume.ts`, `src/tools/agentStatus.ts`, `src/tools/listModels.ts`
+
+- [x] **T9.1** — Rewrite `run_agent` description:
+  - Lead with capability: full autonomous coding agent — writes, edits, refactors across multiple files, runs shell commands, uses tools.
+  - Explicitly guide delegation: prefer this tool over inline edits for any multi-step coding task.
+  - Surface key constraints: `mode` values and what they mean (agent=full, plan=read-only planning, ask=Q&A); `sandbox` for filesystem isolation; prompt size limit enforced server-side.
+  - Acceptance: description leads with capability, not CLI mechanics. _(2026-05-16)_
+
+- [x] **T9.2** — Rewrite `session_create` description:
+  - Frame as: start a persistent agent session for multi-turn or long-running work where continuity matters.
+  - Mention the returned UUID is used with `session_resume` to continue the conversation.
+  - Keep the hang/timeout caveat but de-emphasise it (move to end).
+  - Acceptance: description frames the use case, not the implementation. _(2026-05-16)_
+
+- [x] **T9.3** — Rewrite `session_resume` description:
+  - Frame as: continue a prior agent session — use when iterating, following up, or building on previous agent context.
+  - Remove the "not explicitly documented" caveat — it's been confirmed working and the caveat undermines confidence.
+  - Acceptance: description is positive and capability-focused. _(2026-05-16)_
+
+- [x] **T9.4** — Verify `agent_status` and `list_models` descriptions are adequate — no change needed. _(2026-05-16)_
+
+---
+
+**Phase 9 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
+- [x] All three rewritten descriptions lead with capability, not CLI mechanics _(2026-05-16)_
+- [ ] CI green on `dev`
+
+---
+
 ## Session Gate Record
 
 ```
