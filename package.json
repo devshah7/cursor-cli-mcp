@@ -1,14 +1,20 @@
 {
   "name": "@devshah7/cursor-cli-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for controlling Cursor's agent CLI",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "main": "dist/index.js",
-  "bin": { "cursor-cli-mcp": "dist/index.js" },
-  "files": ["dist", "README.md", "LICENSE"],
+  "bin": {
+    "cursor-cli-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "setup": "node scripts/setup.js",
     "lint": "eslint src/ tests/ --no-error-on-unmatched-pattern",
