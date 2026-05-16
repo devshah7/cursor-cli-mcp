@@ -100,69 +100,21 @@ Download and install from [claude.ai/download](https://claude.ai/download) and s
 
 ---
 
-## Quick setup (recommended)
+## Setup
 
-Clone the repo and run one command:
+No install or clone needed — the package runs via `npx` directly from npm.
 
-```bash
-git clone https://github.com/devshah7/cursor-cli-mcp.git
-cd cursor-cli-mcp
-npm run setup
-```
-
-The interactive script handles everything:
-
-| Step | What happens |
-|------|-------------|
-| 1 | Checks Node.js `>= 20` |
-| 2 | Finds the `agent` binary (checks common paths; prompts if not found) |
-| 3 | Runs `npm install` + `npm run build` |
-| 4 | Finds (or creates) `claude_desktop_config.json` at the correct OS path |
-| 5 | Prompts for the workspace paths you want the agent to be allowed to access |
-| 6 | Writes the `cursor-cli-mcp` entry into your Claude Desktop config |
-| 7 | Smoke-tests the server with an MCP `initialize` handshake |
-
-Then **restart Claude Desktop** — the tools appear automatically.
-
----
-
-## Manual setup
-
-If you prefer to configure manually:
-
-### 1. Install and build
-
-```bash
-npm install && npm run build
-```
-
-### 2. Find your Claude Desktop config file
-
-Open your terminal and navigate to the config directory:
+### 1. Find your Claude Desktop config file
 
 | Platform | Path |
 |----------|------|
-| macOS | `~/Library/Application Support/Claude/` |
-| Linux | `~/.config/Claude/` |
-| Windows | `%APPDATA%\Claude\` |
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Linux | `~/.config/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 
-Open it directly from the terminal:
+Create the file if it doesn't exist yet.
 
-```bash
-# macOS
-open ~/Library/Application\ Support/Claude/
-
-# Linux
-xdg-open ~/.config/Claude/
-```
-
-Windows — paste into File Explorer address bar: `%APPDATA%\Claude\`
-
-The file is called `claude_desktop_config.json`. Create it if it doesn't exist yet.
-
-### 3. Add the MCP server entry
-
-**Recommended (always uses latest version)**
+### 2. Add the MCP server entry
 
 ```json
 {
@@ -180,30 +132,9 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
 }
 ```
 
-**Alternative (local development build)**
-
-```json
-{
-  "mcpServers": {
-    "cursor-cli-mcp": {
-      "command": "node",
-      "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
-      "env": {
-        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
-        "WORKSPACE_ALLOWLIST": "/Users/you/projects;/Users/you/work",
-        "AGENT_TIMEOUT_MS": "120000",
-        "SESSION_CREATE_TIMEOUT_MS": "10000",
-        "MAX_OUTPUT_BYTES": "524288",
-        "LOG_LEVEL": "info"
-      }
-    }
-  }
-}
-```
-
 Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table above, and `WORKSPACE_ALLOWLIST` with the semicolon-separated absolute paths the agent is allowed to operate on.
 
-### 4. Restart Claude Desktop
+### 3. Restart Claude Desktop
 
 ---
 
@@ -313,6 +244,16 @@ You should see a JSON-RPC response with `serverInfo.name: "cursor-cli-mcp"`.
 
 ## Development
 
+To work on this project locally:
+
+```bash
+git clone https://github.com/devshah7/cursor-cli-mcp.git
+cd cursor-cli-mcp
+npm install
+```
+
+Gate check (all four must pass before opening a PR):
+
 ```bash
 npm run lint        # eslint
 npm run typecheck   # tsc --noEmit
@@ -320,9 +261,24 @@ npm run build       # compile to dist/
 npm run test:unit   # vitest unit tests
 ```
 
-All four must pass before opening a PR.
+To use your local build instead of the npm package, point Claude Desktop at the compiled output:
 
-**Branch model:** `main` is production (v1+). All work targets the `dev` integration branch via a feature branch → PR. When `dev` is stable, a release PR merges it into `main`.
+```json
+{
+  "mcpServers": {
+    "cursor-cli-mcp": {
+      "command": "node",
+      "args": ["/path/to/cursor-cli-mcp/dist/index.js"],
+      "env": {
+        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects"
+      }
+    }
+  }
+}
+```
+
+**Branch model:** `main` is production. All work targets the `dev` integration branch via a feature branch → PR. When `dev` is stable, a release PR merges it into `main`.
 
 ```bash
 git checkout dev && git pull origin dev
