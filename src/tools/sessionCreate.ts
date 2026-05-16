@@ -3,6 +3,7 @@ import type { PipelineContext } from '../pipeline/toolPipeline.js';
 import type { ExecutorResult } from '../ports/executorTypes.js';
 import type { IAgentExecutor } from '../ports/agentExecutor.js';
 import type { ToolDescriptor } from '../registry/tools.js';
+import { buildError } from '../errors.js';
 
 export const sessionCreateSchema = z.object({
   workspace: z.string().optional(),
@@ -87,7 +88,9 @@ export function createSessionCreateDescriptor(
       }
       const sessionId = parseCreateChatStdout(result.stdout);
       if (sessionId === null) {
-        throw new Error('create-chat: could not parse session id from stdout');
+        throw buildError('VALIDATION', 'create-chat: could not parse session id from stdout', {
+          stderrExcerpt: result.stdout.slice(0, 200),
+        });
       }
       return { sessionId };
     },

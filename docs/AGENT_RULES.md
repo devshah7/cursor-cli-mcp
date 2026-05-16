@@ -187,7 +187,8 @@ Format: change `[ ]` to `[x]` and add the completion date.
 
 Modules have defined dependency rules in ARCHITECTURE.md section 9. Do not violate them:
 
-- `src/executor/` must NOT import from `src/tools/`, `src/server.ts`, or MCP SDK types.
+- `src/adapters/agentCli/` must NOT import from `src/tools/`, `src/server.ts`, or MCP SDK types.
+- `src/tools/` must NOT import from `src/adapters/` — only from `src/ports/`.
 - `src/security.ts` must NOT import from anything outside Node builtins.
 - `src/logger.ts` must write ONLY to `process.stderr`.
 - Tool handlers must NOT import from each other.
@@ -196,11 +197,11 @@ If you need shared logic between tools, add it to a new file and get it reviewed
 
 ---
 
-## Rule 14: Session Tools Are Gated
+## Rule 14: Do Not Call validatePaths Inside Tool Handlers
 
-Do not implement `src/tools/sessionList.ts`, `src/tools/sessionCreate.ts`, or `src/tools/sessionResume.ts` until `feat/phase-2-cli-validation` is merged and TASK_LIST.md shows `SESSION_GATE: PASS`.
+`security.validatePaths()` is called centrally by `pipeline/toolPipeline.ts` **before** any tool handler is invoked. Do not call it again inside a handler — it would be redundant and could produce inconsistent error types if the pipeline's centralized call already passed.
 
-If you are working on `feat/phase-2-tool-sessions` and the gate shows `FAIL`, stop immediately and comment on the PR that the branch is cancelled.
+Tool handlers receive only pre-validated, allowlisted paths. If a handler needs to reject a path for business reasons, throw a `StructuredError` with `errorClass: VALIDATION`.
 
 ---
 
@@ -262,6 +263,7 @@ If the flag is missing, `server.ts` never injects the callback and the handler's
 | Merging interface-changing branch out of order | Breaks `dev` even when per-branch CI was green |
 | Skipping `npm run test:unit` on `dev` after a merge | Only the merged state reveals cross-branch conflicts |
 | `sendNotification` used in a handler without `supportsStreaming: true` | Callback never wired; streaming path is a no-op |
+| Calling `security.validatePaths()` inside a tool handler | Pipeline already called it; duplicate call produces inconsistent errors |
 
 ---
 

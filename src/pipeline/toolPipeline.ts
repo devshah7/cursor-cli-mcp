@@ -117,6 +117,16 @@ function mapThrownError(err: unknown): CallToolResult {
       );
     }
   }
+  // Handle StructuredError-shaped objects thrown directly from handlers (e.g. buildError(...))
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'errorClass' in err &&
+    'message' in err &&
+    typeof (err as Record<string, unknown>).errorClass === 'string'
+  ) {
+    return errorPayload(err as StructuredError);
+  }
   const msg = err instanceof Error ? err.message : 'Unknown error';
   return errorPayload(buildError(ErrorClass.UNKNOWN, msg));
 }
