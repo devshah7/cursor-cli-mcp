@@ -39,6 +39,16 @@ export function createRunAgentDescriptor(_ctx: PipelineContext): ToolDescriptor<
       'Delegate a coding task to a fully autonomous Cursor agent. ' +
       'The agent can read, write, and refactor code across multiple files; run shell commands; install packages; and use MCP tools — all without manual intervention. ' +
       'Prefer this tool over doing work inline whenever the task involves file edits, multi-step implementation, debugging, or anything requiring workspace access. ' +
+      '\n\n' +
+      'TIMEOUT BEHAVIOUR (read before use): Long tasks will return an MCP -32001 timeout error. ' +
+      'This is the MCP client dropping its connection — it does NOT stop the Cursor agent. ' +
+      'The agent continues running in the background and writes changes to disk. ' +
+      'After a timeout: (1) wait a moment, (2) read the workspace files to verify what was done, ' +
+      '(3) run your project gate check (lint/typecheck/build/test) to confirm correctness, ' +
+      '(4) call run_agent again with only the remaining work if anything is incomplete. ' +
+      'Do NOT re-implement the work inline — check the files first. ' +
+      'See the usage-patterns resource for the full post-timeout workflow. ' +
+      '\n\n' +
       'Modes: "agent" (default) = full read/write access; "plan" = read-only planning and analysis, no edits made; "ask" = Q&A and explanation, no edits made. ' +
       'Set sandbox: true to isolate filesystem writes to a temporary environment. ' +
       'Prompt size is capped server-side — split large context into smaller focused tasks if rejected. ' +
