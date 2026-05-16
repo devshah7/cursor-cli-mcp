@@ -85,7 +85,7 @@ config.test.ts must cover:
 - each env var overrides its corresponding default
 - invalid AGENT_TIMEOUT_MS (non-numeric) → throws on load
 - invalid MAX_OUTPUT_BYTES (non-numeric) → throws on load
-- WORKSPACE_ALLOWLIST parsing: colon-separated → string array
+- WORKSPACE_ALLOWLIST parsing: semicolon-separated → string array
 - empty WORKSPACE_ALLOWLIST → empty array (deny all)
 ```
 

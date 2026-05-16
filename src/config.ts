@@ -104,7 +104,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     allowRaw === ''
       ? []
       : allowRaw
-          .split(':')
+          .split(';')
           .map((s) => s.trim())
           .filter((s) => s.length > 0);
 
