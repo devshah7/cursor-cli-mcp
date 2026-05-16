@@ -162,6 +162,26 @@ The file is called `claude_desktop_config.json`. Create it if it doesn't exist y
 
 ### 3. Add the MCP server entry
 
+**Recommended (always uses latest version)**
+
+```json
+{
+  "mcpServers": {
+    "cursor-cli-mcp": {
+      "command": "npx",
+      "args": ["-y", "@devshah7/cursor-cli-mcp"],
+      "env": {
+        "AGENT_BINARY_PATH": "/Users/you/.local/bin/cursor-agent",
+        "WORKSPACE_ALLOWLIST": "/Users/you/projects",
+        "AGENT_TIMEOUT_MS": "300000"
+      }
+    }
+  }
+}
+```
+
+**Alternative (local development build)**
+
 ```json
 {
   "mcpServers": {

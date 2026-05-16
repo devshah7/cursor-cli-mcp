@@ -1,19 +1,22 @@
 {
-  "name": "cursor-cli-mcp",
-  "version": "0.1.0",
+  "name": "@devshah7/cursor-cli-mcp",
+  "version": "1.0.0",
   "description": "MCP server for controlling Cursor's agent CLI",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "main": "dist/index.js",
+  "bin": { "cursor-cli-mcp": "dist/index.js" },
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "setup": "node scripts/setup.js",
     "lint": "eslint src/ tests/ --no-error-on-unmatched-pattern",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
     "test:unit": "vitest run tests/unit/",
-    "test:integration": "vitest run tests/integration/"
+    "test:integration": "vitest run tests/integration/",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -21,7 +24,7 @@
     "agent",
     "model-context-protocol"
   ],
-  "author": "",
+  "author": "Dev Shah <shahdev99@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

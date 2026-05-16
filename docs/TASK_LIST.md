@@ -759,6 +759,48 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 ---
 
+## Phase 10 — npm Publish Setup (v1.0.0 public release)
+
+**Source:** Make the tool easy to install for end users via `npx` — no local build step required.  
+**Branch:** `chore/npm-publish-setup` cut from `dev`; PR back to `dev`.  
+**Date started:** 2026-05-16  
+
+---
+
+### `chore/npm-publish-setup` — single branch
+
+**Files in scope:** `package.json`, `src/index.ts`, `README.md`
+
+- [x] **T10.1** — Update `package.json`:
+  - Rename package to `@devshah7/cursor-cli-mcp`
+  - Set version to `1.0.0`
+  - Add `bin: { "cursor-cli-mcp": "dist/index.js" }`
+  - Add `files: ["dist", "README.md", "LICENSE"]`
+  - Add `prepublishOnly` script: `npm run build`
+  - Acceptance: `npm pack --dry-run` shows only `dist/`, `README.md`, `LICENSE` _(2026-05-16)_
+
+- [x] **T10.2** — Add shebang to `src/index.ts`:
+  - First line: `#!/usr/bin/env node`
+  - Acceptance: `npm run build` succeeds; `dist/index.js` starts with shebang _(2026-05-16)_
+
+- [x] **T10.3** — Update `README.md`:
+  - Add `npx` config example as the primary install method
+  - Keep local path example as secondary ("for development")
+  - Acceptance: README shows both `npx` and local path variants _(2026-05-16)_
+
+---
+
+**Phase 10 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-05-16)_
+- [x] `npm run test:unit` passes (109 tests) _(2026-05-16)_
+- [x] `npm pack --dry-run` shows only expected files (107 files, no stale sessionList) _(2026-05-16)_
+- [x] `dist/index.js` starts with shebang line _(2026-05-16)_
+- [ ] CI green on `dev`
+- [ ] `npm publish --dry-run` exits 0
+
+---
+
 ## Session Gate Record
 
 ```

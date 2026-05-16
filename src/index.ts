@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { AgentCliExecutor } from './adapters/agentCli/executor.js';
 import { ConfigError, loadConfig } from './config.js';
 import { startServer } from './server.js';
