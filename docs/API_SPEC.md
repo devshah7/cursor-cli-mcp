@@ -25,9 +25,8 @@
     | "BINARY_NOT_FOUND"   // agent binary not found at configured path
     | "AUTH_REQUIRED"      // agent reports login required
     | "TIMEOUT"            // subprocess exceeded AGENT_TIMEOUT_MS
-    | "OUTPUT_TRUNCATED"   // output exceeded MAX_OUTPUT_BYTES (non-fatal, included in success response)
     | "SECURITY"           // path allowlist violation
-    | "VALIDATION"         // Zod schema validation failure
+    | "VALIDATION"         // Zod schema validation failure or prompt too large
     | "AGENT_ERROR"        // agent exited non-zero for other reasons
     | "UNKNOWN";           // unclassified error
   message: string;         // human-readable description
@@ -345,7 +344,7 @@ unexpected JS exception (not spawn ENOENT)?
 ```json
 {
   "name": "cursor-cli-mcp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MCP server for controlling Cursor's agent CLI"
 }
 ```

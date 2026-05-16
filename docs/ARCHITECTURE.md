@@ -69,7 +69,7 @@ cursor-cli-mcp/
 │   ├── pipeline/
 │   │   └── toolPipeline.ts         # validate → security → execute → map (one place)
 │   ├── registry/
-│   │   ├── tools.ts                # ALL_TOOLS: ToolDescriptor[] — server reads this
+│   │   ├── tools.ts                # buildToolDescriptors(config) → ToolDescriptor[] — server reads this
 │   │   ├── resources.ts            # ALL_RESOURCES: ResourceDescriptor[]
 │   │   └── prompts.ts              # ALL_PROMPTS: PromptDescriptor[]
 │   ├── tools/
@@ -121,7 +121,7 @@ cursor-cli-mcp/
 │   │       ├── sessionCreate.test.ts
 │   │       └── sessionResume.test.ts
 │   ├── integration/
-│   │   └── agentCli.test.ts
+│   │   └── (requires CURSOR_AGENT_PATH secret; skipped in CI if absent)
 │   └── fixtures/
 │       └── mockExecutor.ts         # Implements IAgentExecutor (not a cast hack)
 │
@@ -203,8 +203,10 @@ interface PipelineContext {
   workspaceAllowlist: string[];
   agentBinaryPath: string;
   agentTimeoutMs: number;
+  sessionCreateTimeoutMs: number;
   maxOutputBytes: number;
-  sendNotification?: (chunk: string) => void;  // Phase 4 streaming — undefined = aggregated-only fallback
+  promptMaxChars: number;
+  sendNotification?: (chunk: string) => void;  // streaming — undefined = aggregated-only fallback
 }
 ```
 
@@ -214,19 +216,23 @@ interface PipelineContext {
 
 ### 4.4 `src/registry/`
 
-Self-registration pattern. Each registry file exports an array of descriptors. `server.ts` reads the array — it does not enumerate tools manually.
+Self-registration pattern. Each registry file exports a factory function. `server.ts` calls it with `Config` and iterates the result — it does not enumerate tools manually.
 
 ```typescript
 // registry/tools.ts
-export const ALL_TOOLS: ToolDescriptor[] = [
-  runAgentDescriptor,
-  listModelsDescriptor,
-  agentStatusDescriptor,
-  // sessions added here only if SESSION_GATE passes — no other file changes
-];
+export function buildToolDescriptors(config: Config): Array<ToolDescriptor<unknown>> {
+  const ctx = pipelineContextFromConfig(config);
+  return [
+    createRunAgentDescriptor(ctx),
+    createListModelsDescriptor(ctx),
+    createSessionCreateDescriptor(ctx),
+    createSessionResumeDescriptor(ctx),
+    createAgentStatusDescriptor(ctx),
+  ];
+}
 ```
 
-Adding a tool = add one import + one array entry. No `server.ts` change. No `index.ts` change.
+Adding a tool = add one import + one array entry in `buildToolDescriptors`. No `server.ts` change. No `index.ts` change.
 
 ---
 
@@ -235,12 +241,13 @@ Adding a tool = add one import + one array entry. No `server.ts` change. No `ind
 Each tool file exports a `ToolDescriptor`:
 
 ```typescript
-interface ToolDescriptor {
+interface ToolDescriptor<T = unknown> {
   name: string;
   description: string;
-  schema: ZodSchema;
-  pathArgs: (input: unknown) => string[];  // which fields need path validation
-  handler: (input: ValidatedInput, executor: IAgentExecutor) => Promise<ToolResult>;
+  schema: ZodType<T>;
+  pathArgs: (input: T) => string[];       // which fields need path validation
+  handler: (input: T, executor: IAgentExecutor, ctx: PipelineContext) => Promise<unknown>;
+  supportsStreaming?: boolean;            // when true, server wires sendNotification per-chunk callback
 }
 ```
 
@@ -306,10 +313,10 @@ Canonical definitions live in `src/ports/executorTypes.ts` (dependency boundary)
 ```typescript
 interface ExecutorOptions {
   binary: string;
-  args: string[];
+  command: AgentCommand;   // semantic operation — argv built in argBuilder.ts only
   timeoutMs: number;
   maxOutputBytes: number;
-  onStdoutChunk?: (chunk: string) => void;  // Phase 4 streaming — called per chunk before process exit
+  onStdoutChunk?: (chunk: string) => void;  // called per stdout chunk before process exit
 }
 
 interface ExecutorResult {
@@ -334,6 +341,7 @@ Loads and validates all configuration from environment variables. Injected into 
 | `AGENT_TIMEOUT_MS` | `120000` | Integer > 0; throws `ConfigError` if invalid |
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Integer > 0; throws `ConfigError` if invalid |
 | `MAX_OUTPUT_BYTES` | `524288` | Integer ≥ `1024`; throws `ConfigError` if below minimum or invalid |
+| `PROMPT_MAX_CHARS` | `20000` | Maximum prompt length in characters; `run_agent` returns `VALIDATION` before spawning if exceeded |
 | `WORKSPACE_ALLOWLIST` | `""` (deny all) | Split on `;`; empty → deny all; no allow-all mode |
 | `LOG_LEVEL` | `info` | One of: `debug`, `info`, `warn`, `error` |
 | `LOG_PROMPTS` | `false` | Prompt text logged only if `true`, only at `debug` |
@@ -406,7 +414,7 @@ Writes JSON lines to `process.stderr` only. `console.log` and `console.error` ar
 [MCP Host]
     │  JSON-RPC tools/call { name: "run_agent", arguments: { prompt, model, workspace } }
     ▼
-[server.ts]  — looks up tool in ALL_TOOLS registry, delegates to pipeline
+[server.ts]  — looks up tool in buildToolDescriptors() registry, delegates to pipeline
     │
     ▼
 [toolPipeline.ts]
@@ -502,7 +510,7 @@ index.ts (composition root)
   ├── tools/runAgent.ts ─────────────┐
   ├── tools/listModels.ts ───────────┤──→ ports/agentExecutor.ts (IAgentExecutor)
   ├── tools/agentStatus.ts ──────────┤         ↑ implemented by
-  └── tools/sessions/* ─────────────┘   adapters/agentCli/executor.ts
+  └── tools/sessionResume.ts ──────────┘   adapters/agentCli/executor.ts
                                                ├── adapters/agentCli/argBuilder.ts
                                                ├── adapters/agentCli/ringBuffer.ts
                                                └── adapters/agentCli/types.ts

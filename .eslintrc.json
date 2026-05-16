@@ -48,6 +48,22 @@
           }
         ]
       }
+    },
+    {
+      "files": ["src/adapters/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/tools/**"],
+                "message": "Adapters must not import from tools (upward dependency violation)"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "ignorePatterns": ["dist/", "node_modules/"]

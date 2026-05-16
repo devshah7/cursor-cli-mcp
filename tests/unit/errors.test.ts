@@ -7,7 +7,6 @@ describe('errors', () => {
       'BINARY_NOT_FOUND',
       'AUTH_REQUIRED',
       'TIMEOUT',
-      'OUTPUT_TRUNCATED',
       'SECURITY',
       'VALIDATION',
       'AGENT_ERROR',

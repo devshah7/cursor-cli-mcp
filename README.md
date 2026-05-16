@@ -216,6 +216,7 @@ Replace `AGENT_BINARY_PATH` with your `cursor-agent` binary path from the table 
 | `AGENT_TIMEOUT_MS` | `120000` | Milliseconds before the subprocess is killed |
 | `SESSION_CREATE_TIMEOUT_MS` | `10000` | Milliseconds before `session_create` (`create-chat`) subprocess is killed — prevents create-chat hang |
 | `MAX_OUTPUT_BYTES` | `524288` | Maximum stdout captured (ring buffer — older bytes are dropped) |
+| `PROMPT_MAX_CHARS` | `20000` | Maximum prompt length in characters; `run_agent` returns a `VALIDATION` error before invoking the CLI if exceeded |
 | `LOG_LEVEL` | `info` | One of: `debug`, `info`, `warn`, `error` |
 | `LOG_PROMPTS` | `false` | Log prompt text — only at `debug` level if `true` |
 

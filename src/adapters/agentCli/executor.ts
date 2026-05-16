@@ -54,8 +54,6 @@ function argvForCommand(command: AgentCommand): string[] {
 }
 
 export class AgentCliExecutor implements IAgentExecutor {
-  constructor() {}
-
   async run(options: ExecutorOptions): Promise<ExecutorResult> {
     const started = Date.now();
     const stdoutBuf = new RingBuffer(options.maxOutputBytes);
