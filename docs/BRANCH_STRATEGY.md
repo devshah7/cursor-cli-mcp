@@ -63,10 +63,13 @@ git checkout -b feat/my-feature
 
 When `dev` is stable and ready to ship:
 
-1. Open a PR from `dev` → `main`
-2. PR title: `release: vX.Y.Z`
-3. Description summarises what changed since last release
-4. Merge — this becomes the new production version
+1. In `CHANGELOG.md`: move all items from `[Unreleased]` into a new `[X.Y.Z] - YYYY-MM-DD` section, leave a fresh empty `[Unreleased]` at the top, and add the new comparison link at the bottom
+2. Bump the version in `package.json`, then run `npm install` to sync `package-lock.json`
+3. Commit: `chore: release vX.Y.Z`
+4. Open a PR from `dev` → `main`, title `release: vX.Y.Z`
+5. Merge — this becomes the new production version
+6. Tag the merge commit: `git tag vX.Y.Z && git push origin vX.Y.Z`
+7. Create a GitHub Release from that tag — paste the matching `CHANGELOG.md` section as the release notes
 
 ---
 
@@ -84,6 +87,7 @@ Every PR description must include:
 - [ ] No `shell: true` in any subprocess call
 - [ ] No secrets or tokens in code or test fixtures
 - [ ] Targets `dev` (not `main`)
+- [ ] `CHANGELOG.md` updated under `[Unreleased]` (if user-facing change)
 ```
 
 ---
