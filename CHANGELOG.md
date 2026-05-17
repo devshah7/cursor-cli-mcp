@@ -9,11 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.0.2] - 2026-05-16
+
+Documentation and tooling release. No runtime changes.
+
 ### Added
 - `CONTRIBUTING.md` — contributor guide covering dev setup, branch model, issue/PR guidelines, code standards, and project structure
+- `CHANGELOG.md` — this file; backfilled for v1.0.0 and v1.0.1
+- Release workflow documented in `docs/BRANCH_STRATEGY.md` (changelog update, version bump, tagging, GitHub Release steps)
 
 ### Fixed
-- `package-lock.json` version and package name out of sync with `package.json` (no dependency changes)
+- `package-lock.json` package name and version out of sync with `package.json` (no dependency changes)
+- README `## Development` section condensed; full contributor guide moved to `CONTRIBUTING.md`
 
 ---
 
@@ -69,6 +78,7 @@ Initial public release — published to npm as [`@devshah7/cursor-cli-mcp`](http
 - GitHub Actions CI (`lint`, `typecheck`, `build`, `test:unit`)
 - `npm run setup` for one-command Claude Desktop config installation
 
-[Unreleased]: https://github.com/devshah7/cursor-cli-mcp/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/devshah7/cursor-cli-mcp/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/devshah7/cursor-cli-mcp/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/devshah7/cursor-cli-mcp/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/devshah7/cursor-cli-mcp/releases/tag/v1.0.0
