@@ -174,7 +174,9 @@ This project has a strict layered architecture. Before writing code, read [`docs
    gh pr create --base dev
    ```
 
-2. Fill out the PR template. Every PR description must include the following checklist:
+2. If your change is user-facing (new feature, bug fix, behaviour change), add an entry to the `[Unreleased]` section of [`CHANGELOG.md`](../CHANGELOG.md). Documentation and tooling changes don't require a changelog entry.
+
+3. Fill out the PR template. Every PR description must include the following checklist:
 
    ```markdown
    ## Checklist
@@ -186,13 +188,14 @@ This project has a strict layered architecture. Before writing code, read [`docs
    - [ ] No `shell: true` in any subprocess call
    - [ ] No secrets or tokens in code or test fixtures
    - [ ] Targets `dev` (not `main`)
+   - [ ] `CHANGELOG.md` updated (if user-facing change)
    ```
 
-3. CI will run the gate check automatically. Fix any failures before requesting review.
+4. CI will run the gate check automatically. Fix any failures before requesting review.
 
-4. Keep the PR small and focused. Large PRs are harder to review and slower to merge. If your change is substantial, consider splitting it.
+5. Keep the PR small and focused. Large PRs are harder to review and slower to merge. If your change is substantial, consider splitting it.
 
-5. Respond to review feedback promptly. Unanswered review comments will stall the PR.
+6. Respond to review feedback promptly. Unanswered review comments will stall the PR.
 
 ### What happens after merge
 
