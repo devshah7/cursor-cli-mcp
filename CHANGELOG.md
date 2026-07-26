@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `agent_status`: `agentCliVersion` now comes from a dedicated `agent --version` call instead of reusing `agent status` stdout (which is login/auth text, not a version string). The non-authenticated response now returns only `{ authenticated: false, binaryPath }`, matching `docs/API_SPEC.md` §3.6.
+
 ---
 
 ## [1.0.2] - 2026-05-16

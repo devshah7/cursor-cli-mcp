@@ -37,11 +37,31 @@ export function createAgentStatusDescriptor(
         return result;
       }
 
+      const authenticated = result.exitCode === 0;
+      if (!authenticated) {
+        return { authenticated, binaryPath: toolCtx.agentBinaryPath };
+      }
+
       const stdout = result.stdout.trim();
+
+      // Best-effort: `agent status` reports login state, not the CLI version.
+      // agentCliVersion comes from a separate `agent --version` call (API_SPEC §3.6).
+      const versionResult = await executor.run({
+        binary: toolCtx.agentBinaryPath,
+        command: { kind: 'agent_version' },
+        timeoutMs: toolCtx.agentTimeoutMs,
+        maxOutputBytes: toolCtx.maxOutputBytes,
+      });
+      const agentCliVersion =
+        !versionResult.timedOut && versionResult.exitCode === 0
+          ? versionResult.stdout.trim()
+          : undefined;
+
       return {
-        authenticated: result.exitCode === 0,
+        authenticated,
         binaryPath: toolCtx.agentBinaryPath,
-        ...(stdout !== '' ? { version: stdout, agentCliVersion: stdout } : {}),
+        ...(stdout !== '' ? { version: stdout } : {}),
+        ...(agentCliVersion !== undefined && agentCliVersion !== '' ? { agentCliVersion } : {}),
       };
     },
   };

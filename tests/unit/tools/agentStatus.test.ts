@@ -29,10 +29,10 @@ function baseConfig(overrides?: Partial<Config>): Config {
 describe('agent_status tool', () => {
   const ctx: PipelineContext = pipelineContextFromConfig(baseConfig());
 
-  it('exit 0 → authenticated true with binaryPath', async () => {
-    const executor = new MockExecutor(async () =>
+  it('exit 0 → authenticated true with binaryPath, version, and agentCliVersion from separate calls', async () => {
+    const executor = new MockExecutor(async (options) =>
       Promise.resolve({
-        stdout: 'v1',
+        stdout: options.command.kind === 'agent_version' ? '2026.06.04-5fd875e' : 'v1',
         stderrExcerpt: '',
         exitCode: 0,
         timedOut: false,
@@ -47,9 +47,10 @@ describe('agent_status tool', () => {
     expect(body.authenticated).toBe(true);
     expect(body.binaryPath).toBe('/usr/local/bin/agent');
     expect(body.version).toBe('v1');
+    expect(body.agentCliVersion).toBe('2026.06.04-5fd875e');
   });
 
-  it('exit non-zero → success JSON with authenticated false (not isError)', async () => {
+  it('exit non-zero → success JSON with only authenticated and binaryPath (no version fields, not isError)', async () => {
     const executor = new MockExecutor(async () =>
       Promise.resolve({
         stdout: '',
@@ -64,8 +65,7 @@ describe('agent_status tool', () => {
     const out = await wrapped({});
     expect(out.isError).not.toBe(true);
     const body = JSON.parse(getText(out));
-    expect(body.authenticated).toBe(false);
-    expect(body.binaryPath).toBe('/usr/local/bin/agent');
+    expect(body).toEqual({ authenticated: false, binaryPath: '/usr/local/bin/agent' });
   });
 
   it('exit 127 → BINARY_NOT_FOUND error', async () => {

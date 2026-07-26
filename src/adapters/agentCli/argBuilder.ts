@@ -53,6 +53,10 @@ export function buildAgentStatusArgs(): string[] {
   return ['status'];
 }
 
+export function buildAgentVersionArgs(): string[] {
+  return ['--version'];
+}
+
 export function buildSessionCreateArgs(workspace?: string): string[] {
   const args: string[] = ['create-chat'];
   if (workspace !== undefined) {

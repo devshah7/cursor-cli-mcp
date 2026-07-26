@@ -47,6 +47,7 @@ Do not write code until you have read all five documents.
   - `agent ls` is a TUI only — `session_list` tool was removed; no headless session listing available
   - `agent create-chat` may hang after printing ID — dedicated `SESSION_CREATE_TIMEOUT_MS` (default 10s) is the safety net (v1.1 fix)
   - `--sandbox` takes a value: `enabled` or `disabled` (not a bare boolean flag)
+  - `agentCliVersion` in `agent_status` output comes from a dedicated `agent --version` call, not from `agent status` stdout (which is login/auth text, not a version string) — fixed 2026-07-25, see `buildAgentVersionArgs()` in `argBuilder.ts`
 
 ---
 

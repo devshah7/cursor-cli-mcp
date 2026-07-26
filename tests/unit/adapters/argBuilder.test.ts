@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildAgentStatusArgs,
+  buildAgentVersionArgs,
   buildListModelsArgs,
   buildRunAgentArgs,
   buildSessionCreateArgs,
@@ -66,6 +67,10 @@ describe('argBuilder', () => {
 
   it('buildAgentStatusArgs uses status subcommand', () => {
     expect(buildAgentStatusArgs()).toEqual(['status']);
+  });
+
+  it('buildAgentVersionArgs uses --version flag', () => {
+    expect(buildAgentVersionArgs()).toEqual(['--version']);
   });
 
   it('buildSessionCreateArgs uses create-chat subcommand', () => {
