@@ -29,6 +29,8 @@ export type AgentCommand =
     }
   | { kind: 'list_models' }
   | { kind: 'agent_status' }
+  | { kind: 'agent_status_text' }
+  | { kind: 'agent_about' }
   | { kind: 'session_create'; workspace?: string }
   | {
       kind: 'session_resume';

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildAgentAboutArgs,
   buildAgentStatusArgs,
+  buildAgentStatusTextArgs,
   buildListModelsArgs,
   buildRunAgentArgs,
   buildSessionCreateArgs,
@@ -64,8 +66,16 @@ describe('argBuilder', () => {
     expect(buildListModelsArgs()).toEqual(['models']);
   });
 
-  it('buildAgentStatusArgs uses status subcommand', () => {
-    expect(buildAgentStatusArgs()).toEqual(['status']);
+  it('buildAgentStatusArgs requests structured JSON', () => {
+    expect(buildAgentStatusArgs()).toEqual(['status', '--format', 'json']);
+  });
+
+  it('buildAgentStatusTextArgs keeps the plain-text fallback probe', () => {
+    expect(buildAgentStatusTextArgs()).toEqual(['status']);
+  });
+
+  it('buildAgentAboutArgs requests structured JSON', () => {
+    expect(buildAgentAboutArgs()).toEqual(['about', '--format', 'json']);
   });
 
   it('buildSessionCreateArgs uses create-chat subcommand', () => {

@@ -230,7 +230,9 @@ Returns authentication status, version, and binary path.
 z.object({})  // no inputs
 ```
 
-**CLI invocation:** `agent status` and/or `agent about` (whichever is available).
+**CLI invocation:** `agent status --format json`, then `agent about --format json`.
+Falls back to plain `agent status` (exit-code heuristic) when the status JSON cannot be parsed,
+so binaries predating `--format json` keep working.
 
 **Success Response:**
 
@@ -239,14 +241,24 @@ z.object({})  // no inputs
   content: [{
     type: "text",
     text: JSON.stringify({
-      authenticated: boolean;
-      version?: string;
-      binaryPath: string;       // resolved path used by executor
-      agentCliVersion?: string; // from agent --version or about
+      authenticated: boolean;      // isAuthenticated === true AND userInfo present
+      binaryPath: string;          // resolved path used by executor
+      statusSource: "json" | "text-fallback";
+      staleSession?: true;         // cached token present but expired — run `agent login`
+      userEmail?: string;
+      agentCliVersion?: string;    // from `agent about --format json` → cliVersion
+      subscriptionTier?: string;
+      defaultModel?: string;
     })
   }]
 }
 ```
+
+**`authenticated` is not derived from the exit code.** `agent status` exits 0 even when the cached
+token has gone stale, while `-p` runs fail with `AUTH_REQUIRED`. A stale session reports
+`hasAccessToken: true` with no `userInfo` block; this server surfaces that as
+`authenticated: false, staleSession: true`. The `version` field (previously login text, never a
+version string) was removed in Phase 11.
 
 **Special behavior and error contract for `agent_status` (authoritative — resolves contradiction with error taxonomy):**
 
@@ -255,8 +267,9 @@ z.object({})  // no inputs
 | Condition | Response type | `isError` | Notes |
 |-----------|--------------|-----------|-------|
 | Binary not found (ENOENT on spawn) | Error | `true` | `errorClass: BINARY_NOT_FOUND` |
-| Subprocess exits non-zero for any reason | Success | `false` | Return `{ authenticated: false, binaryPath }` |
-| Subprocess exits 0 | Success | `false` | Return `{ authenticated: true, binaryPath, ... }` |
+| Status JSON parses | Success | `false` | `authenticated` from `isAuthenticated` + `userInfo`; exit code ignored |
+| Status JSON unparseable | Success | `false` | Plain-text fallback: `authenticated = exitCode === 0`, `statusSource: "text-fallback"` |
+| `agent about` fails or times out | Success | `false` | Version/account fields omitted; auth fields still returned |
 | JS exception (not spawn ENOENT) | Error | `true` | `errorClass: UNKNOWN` |
 
 `AUTH_REQUIRED` is **never** returned by `agent_status`. It is only valid for `run_agent` and session tools. The rationale: `agent_status` is a diagnostic tool — it must report "not authenticated" gracefully, not fail, so operators can detect auth problems without getting an error response they need to handle.

@@ -37,16 +37,27 @@ Do not write code until you have read all five documents.
 
 ## Project State
 
-- **Current version:** v1.1 fixes are merged on `dev`; release promotion is a `dev → main` PR when ready. **v1.2** work is Phase 6 (post-audit) — see `docs/TASK_LIST.md`.
+- **Current version:** v1.0.2 is published on `main` and npm. Phases 6–10 are merged to `dev`. **Phase 11** (CLI contract refresh) is in progress — see `docs/TASK_LIST.md`.
 - **Branch model:** `main` = production; `dev` = integration; all work branches off `dev` and PRs back to `dev`; release PRs promote `dev` → `main`
-- **Phase 5 branches:** merged to `dev` via PRs (see repo history / `docs/TASK_LIST.md` Phase 5 checkboxes). Further hardening is tracked under Phase 6.
 - **MCP tools live:** `run_agent`, `list_models`, `agent_status`, `session_create`, `session_resume` — all tested against real binary
-- **Known CLI behaviours (confirmed 2026-04-22):**
-  - `--trust` is always passed by the server (WORKSPACE_ALLOWLIST is the real security gate)
-  - `--max-turns` does not exist in this CLI version — removed from schema
-  - `agent ls` is a TUI only — `session_list` tool was removed; no headless session listing available
-  - `agent create-chat` may hang after printing ID — dedicated `SESSION_CREATE_TIMEOUT_MS` (default 10s) is the safety net (v1.1 fix)
-  - `--sandbox` takes a value: `enabled` or `disabled` (not a bare boolean flag)
+
+### Known CLI behaviours
+
+**Re-verified 2026-09-07 against `cursor-agent 2026.07.23-e383d2b`.** Every claim below was established by running the binary, not by reading docs. Re-verify — and re-date this heading — whenever the CLI is upgraded; these behaviours have changed before.
+
+- `--trust` is always passed by the server (WORKSPACE_ALLOWLIST is the real security gate)
+- `--max-turns` does not exist — not in the schema _(still true)_
+- `agent ls` is a TUI only — `session_list` was removed; `ls` has no `--format`, so headless session listing remains impossible _(still true)_
+- `--sandbox` takes a value: `enabled` or `disabled` (not a bare boolean flag) _(still true)_
+- `status` and `about` both support `--format json`. `status` returns `isAuthenticated` / `hasAccessToken` / `userInfo`; `about` returns `cliVersion` / `subscriptionTier` / `userEmail` / `model`. `agent_status` is built on both — see `parseStatusJson()` in `src/tools/agentStatus.ts`
+- **Auth state cannot be read from the exit code.** `agent status` exits 0 when a cached token has gone stale, while `-p` runs fail with `AUTH_REQUIRED`. A stale session shows `hasAccessToken: true` with no `userInfo` block; the server reports this as `authenticated: false, staleSession: true`. Fix is `agent login` — this is session expiry, **not** a requirement for `CURSOR_API_KEY` (which remains a valid alternative for headless/CI environments without a browser)
+- **Headless `--resume` preserves session context.** Verified by resuming a session and having the agent recall the prior turn, with `cacheReadTokens` on the resume matching `cacheWriteTokens` from the original turn. The old README caveat claiming otherwise was wrong and has been removed
+- `agent create-chat --workspace <path>` is **valid** — an inherited program-level option. Confirmed by contrast: `create-chat --bogus-flag-xyz` errors with `unknown option`, so the subcommand does reject genuinely unknown flags
+- `agent create-chat` did not hang across repeated runs on this version; `SESSION_CREATE_TIMEOUT_MS` (default 10s) is retained as a defensive timeout rather than a workaround for a live bug
+- `--model` accepts parameterized overrides, e.g. `claude-opus-4-8[context=1m,effort=high,fast=false]` — the tool schemas allow this suffix
+- `--output-format json|stream-json` returns a structured envelope carrying `is_error`, `result`, `session_id`, `request_id`, and `usage` token counts. **Not yet consumed** — `run_agent` still returns raw stdout and classifies on exit code alone (Phase 12)
+- Flags available but not yet exposed: `--stream-partial-output`, `--auto-review`, `--force`/`--yolo`, `--add-dir`, `--worktree-base`, `--skip-worktree-setup`, `--continue`, `--api-key`, `-H/--header`, `-e/--endpoint` (Phase 13)
+- `agent persist` (2026-08-26 release) provides detached long-lived sessions; requires a binary upgrade before it can be used (Phase 14)
 
 ---
 

@@ -801,6 +801,107 @@ All Phase 6 branches are **PARALLEL** unless noted.
 
 ---
 
+## Phase 11 — CLI Contract Refresh (v1.3)
+
+**Source:** Full CLI re-verification conducted 2026-09-07 against installed binary `2026.07.23-e383d2b`, plus the published Cursor CLI changelog (May 7 → Aug 26, 2026).
+**Reason:** `CLAUDE.md`'s "Known CLI behaviours" block was last confirmed **2026-04-22**. Ten CLI releases shipped in the interim; several repo assumptions are now wrong and one documented CLI feature is rejected by our own schema.
+**Branch:** `fix/phase-11-cli-contract` cut from `dev`; PR back to `dev`.
+**Supersedes:** PR [#53](https://github.com/devshah7/cursor-cli-mcp/pull/53) (`agent --version` for `agentCliVersion`) — `agent about --format json` returns the version plus account fields in a single call.
+
+### Verification method
+
+All findings below were established by running the binary directly, not by reading docs:
+
+| Probe | Result |
+|-------|--------|
+| `agent --help` | Full flag inventory captured |
+| `agent status --format json` | Returns `isAuthenticated`, `hasAccessToken`, `hasRefreshToken`, `userInfo{}` |
+| `agent about --format json` | Returns `cliVersion`, `subscriptionTier`, `userEmail`, `model`, `osPlatform` |
+| `agent create-chat --bogus-flag-xyz` | `error: unknown option` — proves subcommand rejects unknown flags |
+| `agent create-chat --workspace /tmp` | Accepted, exit 0 — `--workspace` is a **valid** inherited program-level option |
+| `agent -p … --output-format json --resume <id>` | `cacheReadTokens` matched prior turn's `cacheWriteTokens` — **headless resume preserves context** |
+
+---
+
+### `fix/phase-11-cli-contract` — single branch
+
+**Files in scope:** `src/tools/runAgent.ts`, `src/tools/sessionResume.ts`, `src/tools/agentStatus.ts`, `src/adapters/agentCli/argBuilder.ts`, `src/ports/executorTypes.ts`, `tests/unit/tools/*.test.ts`, `tests/unit/adapters/argBuilder.test.ts`, `README.md`, `CLAUDE.md`, `docs/API_SPEC.md`, `CHANGELOG.md`
+
+- [x] **T11.1** — Accept parameterized model identifiers:
+  - Cursor documents bracket overrides (`claude-opus-4-8[context=1m,effort=high,fast=false]`), and the 2026-05-14 release made those parameters survive in `-p` mode. The current regex `/^[\w.-]+(\/[\w.-]+)?$/` in `runAgent.ts` and `sessionResume.ts` rejects every one of them before the CLI is invoked.
+  - Extend to allow an optional `[k=v,…]` suffix; keep the anchors and the 200-char cap.
+  - Acceptance: `auto`, `gpt-5.3-codex`, `vendor/model`, and `claude-opus-4-8[context=1m,effort=high,fast=false]` all validate; `bad model`, `a;b`, `x[` still rejected.
+
+- [x] **T11.2** — Rebuild `agent_status` on structured JSON:
+  - `buildAgentStatusArgs()` → `['status','--format','json']`; add `buildAgentAboutArgs()` → `['about','--format','json']`; add an `agent_about` `AgentCommand` variant.
+  - Derive `authenticated` from `isAuthenticated && userInfo` present — **not** from exit code. A cached-but-stale token exits 0 while `run_agent` fails with `AUTH_REQUIRED`; that footgun is currently documented in prose instead of handled in code.
+  - Emit `staleSession: true` when `hasAccessToken` is set but `userInfo` is absent, so the caller gets a machine-readable "run `agent login`" signal.
+  - Surface `agentCliVersion`, `userEmail`, `subscriptionTier`, `defaultModel` from `about`.
+  - Fall back to plain-text `agent status` + exit-code heuristic when the JSON parse fails, so older binaries keep working. Report which path ran via `statusSource`.
+  - Drop the `version` field (it carried login text, never a version string).
+  - Acceptance: stale-token fixture → `authenticated: false, staleSession: true`; healthy fixture → `authenticated: true` with version and account fields; unparseable stdout → text fallback, no throw.
+
+- [x] **T11.3** — Remove the disproven `session_resume` caveat from `README.md`:
+  - The note claiming session context "may not be preserved" under `--print` is false (verified above). Replace with a positive statement carrying the verification date.
+  - Acceptance: no remaining text discouraging headless resume.
+
+- [x] **T11.4** — Simplify the `AUTH_REQUIRED` troubleshooting row in `README.md`:
+  - The manual `agent status --format json` / `userInfo` diagnosis is now performed by the server; point at `agent_status`'s `staleSession` field and the `agent login` fix.
+  - Acceptance: row references the tool output, not a manual CLI ritual.
+
+- [x] **T11.5** — Refresh the `CLAUDE.md` "Known CLI behaviours" block:
+  - Re-date to 2026-09-07 / `2026.07.23-e383d2b`.
+  - Record `--format json` on `status`/`about`; record that headless `--resume` preserves context; record that `create-chat --workspace` is a verified-valid inherited option; soften the `create-chat` hang note to a defensive timeout (not reproducible in this version).
+  - Keep confirmed-still-true items: `--max-turns` absent, `agent ls` TUI-only, `--sandbox enabled|disabled`, `--trust` required headless.
+  - Acceptance: no undated behavioural claims remain in the block.
+
+- [x] **T11.6** — Update `docs/API_SPEC.md` §3.6 to the new `agent_status` response contract. _(2026-09-07)_
+
+- [x] **T11.7** — Add a `CHANGELOG.md` `[Unreleased]` entry covering T11.1–T11.6. _(2026-09-07)_
+
+---
+
+**Phase 11 Gate:**
+
+- [x] `npm run lint && npm run typecheck && npm run build` exit 0 _(2026-09-07)_
+- [x] `npm run test:unit` passes with ≥ 111 tests — 120 tests _(2026-09-07)_
+- [x] Live `agent_status` against the real binary returns `authenticated: true` with `agentCliVersion` — verified end-to-end over stdio JSON-RPC against `2026.07.23-e383d2b`; `agentCliVersion` is now a real version string instead of login text _(2026-09-07)_
+- [~] Parameterized model string accepted end-to-end — **partially verified**. The schema no longer rejects the syntax (unit-tested, and a live call returned `AGENT_ERROR` from the CLI's own catalog check rather than our `VALIDATION`). However, no model in this account's catalog accepted a bracket suffix on `2026.07.23-e383d2b`: `claude-sonnet-5-thinking-high` succeeds plain and fails with `Cannot use this model` when given `[context=1m]`. The syntax is documented in `agent --help`, so the schema change is correct and forward-compatible, and the failure is now a clear CLI message rather than an opaque server-side rejection. Re-test when a parameterized model appears in the catalog _(2026-09-07)_
+- [x] No documentation claims headless resume loses context _(2026-09-07)_
+- [ ] CI green on `fix/phase-11-cli-contract`
+
+---
+
+### Discovered during Phase 11 — not in scope, not fixed
+
+**`WORKSPACE_ALLOWLIST` entries containing a symlink deny everything under them.**
+`resolveAndCheck()` in `src/security.ts` calls `fs.realpathSync()` on the *candidate* path but only
+`path.resolve()` on each *allowlist entry*, so the two sides of the prefix comparison are normalized
+differently. On macOS, `WORKSPACE_ALLOWLIST=/tmp` rejects workspace `/tmp` — the candidate resolves to
+`/private/tmp` while the allowlist entry stays `/tmp`. Reproduced 2026-09-07 through the built server:
+`{"errorClass":"SECURITY","message":"Path not allowed by WORKSPACE_ALLOWLIST: /tmp"}`.
+Fails closed (denies access rather than granting it), so it is a usability bug, not a security hole.
+Fix is to realpath allowlist entries the same way candidates are, with tests covering a symlinked root.
+
+---
+
+### Deferred to later phases (researched 2026-09-07, not in scope here)
+
+| Phase | Item | Why it matters |
+|-------|------|----------------|
+| 12 | Parse the `json` / `stream-json` envelope (`is_error`, `result`, `usage`, `request_id`, `session_id`) | `run_agent` currently returns raw stdout and classifies only on exit code, so an agent failure with `is_error: true` and exit 0 is reported as success |
+| 12 | Return `session_id` from `run_agent` | Every run already emits one in its `system/init` event — multi-turn would no longer need `session_create` at all |
+| 13 | `--stream-partial-output` | True text-delta streaming instead of raw stdout chunks |
+| 13 | `permission_mode` (`--auto-review` / `--force` / `--yolo`) | The server always passes `--trust` with no explicit permission control |
+| 13 | `--add-dir` (repeatable) | Multi-root workspaces; slots into the existing `pathArgs()` allowlist design |
+| 13 | `--worktree-base`, `--skip-worktree-setup` | Completes worktree support behind the existing `worktree-isolation` prompt |
+| 14 | `scripts/cli-contract-check.js` | Snapshot `agent --help` to a golden file and fail CI on drift — the systemic fix for this phase's root cause |
+| 14 | `agent persist` (2026-08-26) | Detached long-lived sessions; the real answer to MCP `-32001` timeouts. Requires a binary upgrade |
+| 14 | Headless JSONL transcripts | Makes the manual post-timeout verification in `usage-patterns` machine-readable |
+| 14 | Admin-disabled headless mode | New org-level failure mode (2026-06-09) deserving its own error class |
+
+---
+
 ## Session Gate Record
 
 ```

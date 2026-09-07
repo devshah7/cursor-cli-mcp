@@ -8,7 +8,10 @@ export const runAgentSchema = z.object({
   prompt: z.string().min(1).max(32_000),
   model: z
     .string()
-    .regex(/^[\w.-]+(\/[\w.-]+)?$/)
+    // Accepts plain ids (`auto`, `gpt-5.3-codex`), `vendor/model`, and Cursor's
+    // parameterized override syntax, e.g.
+    // `claude-opus-4-8[context=1m,effort=high,fast=false]` (verified 2026-09-07).
+    .regex(/^[\w.-]+(\/[\w.-]+)?(\[[\w.,=-]+\])?$/)
     .max(200)
     .optional(),
   mode: z.enum(['agent', 'plan', 'ask']).default('agent'),

@@ -49,8 +49,23 @@ export function buildListModelsArgs(): string[] {
   return ['models'];
 }
 
+/**
+ * `status --format json` (available since the 2026-04 CLI release) reports
+ * `isAuthenticated` / `hasAccessToken` / `userInfo` as structured fields, which is the
+ * only reliable way to tell a healthy session from a cached-but-stale token.
+ */
 export function buildAgentStatusArgs(): string[] {
+  return ['status', '--format', 'json'];
+}
+
+/** Plain-text fallback for binaries predating `status --format json`. */
+export function buildAgentStatusTextArgs(): string[] {
   return ['status'];
+}
+
+/** `about --format json` carries `cliVersion` plus account fields in one call. */
+export function buildAgentAboutArgs(): string[] {
+  return ['about', '--format', 'json'];
 }
 
 export function buildSessionCreateArgs(workspace?: string): string[] {
