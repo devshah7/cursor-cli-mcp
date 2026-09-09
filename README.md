@@ -20,7 +20,7 @@ Claude Desktop / Claude Code
 |-------------|------|-------------|
 | Tool | `run_agent` | Run a prompt in `agent`, `plan`, or `ask` mode — streaming output included |
 | Tool | `list_models` | List all model identifiers available to the CLI |
-| Tool | `agent_status` | Check CLI authentication and binary version |
+| Tool | `agent_status` | Check CLI authentication, account details, and CLI version |
 | Tool | `session_create` | Create a new chat session and return its ID |
 | Tool | `session_resume` | Resume an existing session with a follow-up prompt |
 | Resource | `cli-permissions-reference` | What the agent CLI can and cannot do |
@@ -184,7 +184,17 @@ Returns all model identifiers supported by the CLI. No parameters.
 
 ### `agent_status`
 
-Returns authentication status, binary path, and CLI version. No parameters. Run this first to confirm the server is wired up correctly.
+Returns authentication state, binary path, account details, and the CLI version. No parameters. Run this first to confirm the server is wired up correctly.
+
+| Field | Description |
+|-------|-------------|
+| `authenticated` | `true` only when the CLI reports a session **and** the server returned user details |
+| `staleSession` | Present and `true` when a cached token exists but has expired — run `agent login` |
+| `agentCliVersion` | CLI version, from `agent about --format json` |
+| `userEmail` · `subscriptionTier` · `defaultModel` | Account details, when available |
+| `statusSource` | `json` normally; `text-fallback` on binaries predating `status --format json` |
+
+> `authenticated` is derived from structured CLI output, not from the exit code. `agent status` exits 0 even when a cached token has gone stale, so an exit-code check would report a working session while `run_agent` fails with `AUTH_REQUIRED`.
 
 ---
 
@@ -198,7 +208,7 @@ Creates a new empty chat session and returns its ID.
 
 Returns `{ "sessionId": "<uuid>" }`.
 
-> **Known behaviour:** the `create-chat` subprocess occasionally hangs after printing the ID. `SESSION_CREATE_TIMEOUT_MS` (default 10s) is the safety net for `session_create` specifically.
+> **Defensive timeout:** earlier CLI versions could hang after printing the ID. Not reproducible on `2026.07.23-e383d2b` (verified 2026-09-07), but `SESSION_CREATE_TIMEOUT_MS` (default 10s) is retained as a safety net for `session_create` specifically.
 
 ---
 
@@ -213,7 +223,7 @@ Resumes an existing session with a follow-up prompt.
 | `model` | string | — | CLI default | Model identifier |
 | `output_format` | `text` \| `json` | — | `text` | Output format |
 
-> **Note:** combining `--resume` with `--print` (non-interactive mode) is not officially documented by Cursor. The command runs successfully but session context may not be preserved — this is a Cursor CLI limitation, not a bug in this server.
+> **Verified 2026-09-07:** headless `--resume` **does** preserve session context. Confirmed against `2026.07.23-e383d2b` by resuming a session and having the agent correctly recall the prior turn, with the resumed run's `cacheReadTokens` matching the original turn's `cacheWriteTokens`.
 
 ---
 
@@ -235,7 +245,7 @@ You should see a JSON-RPC response with `serverInfo.name: "cursor-cli-mcp"`.
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `BINARY_NOT_FOUND` error | `agent` binary not found or not executable | Check `AGENT_BINARY_PATH`; confirm `agent status` works in your terminal |
-| `AUTH_REQUIRED` error | CLI not authenticated | Sign in to Cursor, then confirm `agent status` shows your account |
+| `AUTH_REQUIRED` error on `run_agent` / `session_resume` | Not signed in, or a cached token has expired | Run `agent_status`: `authenticated: false` with `staleSession: true` means the token expired — run `agent login` to re-authenticate. (`CURSOR_API_KEY` is an alternative credential for headless/CI environments without a browser; it is not required for normal desktop use.) |
 | `SECURITY` error on workspace path | Path not in `WORKSPACE_ALLOWLIST` | Add the path to `WORKSPACE_ALLOWLIST` in your Claude Desktop config and restart |
 | Tools don't appear in Claude Desktop | Server not started / config wrong | Check the config path and JSON syntax; run the verification command above |
 | `session_create` hangs | Known Cursor CLI bug | Tune `SESSION_CREATE_TIMEOUT_MS` (default 10s); the session ID is usually printed before the hang |

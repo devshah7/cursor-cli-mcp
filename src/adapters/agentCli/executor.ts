@@ -2,7 +2,9 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import type { IAgentExecutor } from '../../ports/agentExecutor.js';
 import type { AgentCommand, ExecutorOptions, ExecutorResult } from '../../ports/executorTypes.js';
 import {
+  buildAgentAboutArgs,
   buildAgentStatusArgs,
+  buildAgentStatusTextArgs,
   buildListModelsArgs,
   buildRunAgentArgs,
   buildSessionCreateArgs,
@@ -41,6 +43,10 @@ function argvForCommand(command: AgentCommand): string[] {
       return buildListModelsArgs();
     case 'agent_status':
       return buildAgentStatusArgs();
+    case 'agent_status_text':
+      return buildAgentStatusTextArgs();
+    case 'agent_about':
+      return buildAgentAboutArgs();
     case 'session_create':
       return buildSessionCreateArgs(command.workspace);
     case 'session_resume':

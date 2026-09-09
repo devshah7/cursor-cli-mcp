@@ -207,7 +207,14 @@ describe('run_agent tool', () => {
   });
 
   it('accepts canonical model ids', async () => {
-    const accepted = ['claude-4-sonnet', 'openai/gpt-4o', 'gpt-5.4-high'];
+    const accepted = [
+      'claude-4-sonnet',
+      'openai/gpt-4o',
+      'gpt-5.4-high',
+      'auto',
+      // Cursor's parameterized override syntax (verified against the CLI 2026-09-07).
+      'claude-opus-4-8[context=1m,effort=high,fast=false]',
+    ];
     for (const model of accepted) {
       const executor = new MockExecutor(async () => ({
         stdout: 'ok',
@@ -220,6 +227,24 @@ describe('run_agent tool', () => {
       const wrapped = wrapTool(createRunAgentDescriptor(ctx), executor, ctx);
       const out = await wrapped({ prompt: 'hello', model });
       expect(out.isError).not.toBe(true);
+    }
+  });
+
+  it('rejects malformed parameterized model syntax', async () => {
+    const rejected = ['claude-opus[', 'claude-opus[a=b', 'claude opus[a=b]', 'a[b];rm -rf /'];
+    for (const model of rejected) {
+      const executor = new MockExecutor(async () => ({
+        stdout: 'ok',
+        stderrExcerpt: '',
+        exitCode: 0,
+        timedOut: false,
+        outputTruncated: false,
+        durationMs: 1,
+      }));
+      const wrapped = wrapTool(createRunAgentDescriptor(ctx), executor, ctx);
+      const out = await wrapped({ prompt: 'hello', model });
+      expect(out.isError, model).toBe(true);
+      expect(JSON.parse(getText(out)).errorClass).toBe('VALIDATION');
     }
   });
 

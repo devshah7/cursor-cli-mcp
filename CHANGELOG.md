@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `agent_status` now reports `staleSession`, `userEmail`, `subscriptionTier`, `defaultModel`, and `statusSource` alongside `authenticated` and `binaryPath`
+- `run_agent` and `session_resume` accept Cursor's parameterized model syntax, e.g. `claude-opus-4-8[context=1m,effort=high,fast=false]`
+
+### Changed
+- `agent_status` is built on `agent status --format json` + `agent about --format json` instead of plain-text stdout. `authenticated` is derived from `isAuthenticated` and the presence of `userInfo`, not from the exit code — a cached-but-stale token exits 0 while `run_agent` fails with `AUTH_REQUIRED`, and that discrepancy is now reported as `staleSession: true`. Falls back to the plain-text probe on binaries predating `--format json`
+- `CLAUDE.md` "Known CLI behaviours" re-verified against `cursor-agent 2026.07.23-e383d2b` (was last confirmed 2026-04-22, ten CLI releases earlier)
+
+### Removed
+- `agent_status` no longer returns `version` — it carried `agent status` login text, never a version string. Use `agentCliVersion`
+- README note claiming headless `--resume` may not preserve session context — disproven by direct testing
+
+### Fixed
+- Model identifiers using Cursor's documented bracket-override syntax were rejected by the tool schemas before the CLI was ever invoked
+
 ---
 
 ## [1.0.2] - 2026-05-16
